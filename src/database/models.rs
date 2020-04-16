@@ -1,6 +1,6 @@
-use super::schema::recipes;
+use serde::{Serialize, Deserialize};
 
-#[derive(Queryable)]
+#[derive(Queryable, Serialize, Deserialize)]
 pub struct Recipe {
     pub id: i32,
     pub title: String,
