@@ -1,7 +1,7 @@
 table! {
     category (id) {
         id -> Integer,
-        value -> Text,
+        name -> Text,
     }
 }
 

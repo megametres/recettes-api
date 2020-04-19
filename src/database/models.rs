@@ -23,6 +23,14 @@ pub struct Recipe {
 #[table_name = "recipe"]
 pub struct NewRecipe<'a> {
     pub name: &'a str,
+    pub author: &'a str,
+    pub image: &'a str,
+    pub prep_time: &'a str,
+    pub cook_time: &'a str,
+    pub total_time: &'a str,
+    pub recipe_yield: &'a str,
+    pub description: &'a str,
+    pub json_ld: &'a str,
 }
 
 #[derive(Identifiable, Queryable, Associations, Serialize, Deserialize)]
@@ -46,11 +54,11 @@ pub struct NewRecipeCategory {
 #[table_name = "category"]
 pub struct Category {
     pub id: i32,
-    pub value: String,
+    pub name: String,
 }
 
-#[derive(Insertable)]
+#[derive(Insertable, Serialize)]
 #[table_name = "category"]
 pub struct NewCategory<'a> {
-    pub value: &'a str,
+    pub name: &'a str,
 }
