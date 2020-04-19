@@ -5,7 +5,7 @@ mod schema;
 
 use diesel::prelude::*;
 use dotenv::dotenv;
-use models::*;
+use models::model_recipe::*;
 use std::env;
 
 pub fn establish_connection() -> SqliteConnection {
@@ -35,6 +35,7 @@ mod tests {
     use super::*;
     use diesel::dsl::count;
     use diesel_migrations::*;
+    use models::model_category::*;
 
     fn setup_test_db() -> SqliteConnection {
         let connection = SqliteConnection::establish(":memory:").unwrap();
