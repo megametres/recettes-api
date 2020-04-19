@@ -4,6 +4,8 @@ extern crate dotenv;
 use super::models::model_recipe::*;
 use super::models::model_recipe_full::*;
 
+use crate::database::schema::recipe::dsl::*;
+
 use dotenv::dotenv;
 use std::env;
 
@@ -19,10 +21,10 @@ pub fn establish_connection() -> SqliteConnection {
 }
 
 pub fn load_recipe() {
-    use crate::database::schema::recipe::dsl::*;
+    use crate::database::schema::*;
 
     let connection = establish_connection();
-    recipe
+    let queried_recipe = recipe
         .filter(recipe::id.eq(1))
         .load::<Recipe>(&connection)
         .expect("Error loading recipes");
