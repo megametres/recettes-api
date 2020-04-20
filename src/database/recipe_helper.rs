@@ -1,6 +1,7 @@
 extern crate diesel_migrations;
 extern crate dotenv;
 
+use super::models::model_category::*;
 use super::models::model_recipe::*;
 use super::models::model_recipe_full::*;
 
@@ -20,14 +21,31 @@ pub fn establish_connection() -> SqliteConnection {
         .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
 }
 
-pub fn load_recipe() {
+pub fn load_recipe(recipe_id: i32) {
     use crate::database::schema::*;
 
     let connection = establish_connection();
+
     let queried_recipe = recipe
-        .filter(recipe::id.eq(1))
-        .load::<Recipe>(&connection)
-        .expect("Error loading recipes");
+        .find(recipe_id)
+        .get_result::<Recipe>(&connection)
+        .unwrap();
+
+    let queried_category_ids =
+        RecipeCategory::belonging_to(&queried_recipe).load::<RecipeCategory>(&connection);
+
+    let queried_category = category::table
+        .load::<Category>(&connection)
+        .expect("could not load tags");
+
+    println!(
+        "Recipe {} has {} categories.",
+        queried_recipe.name,
+        queried_category.len()
+    );
+    for t in queried_category {
+        println!("{}: {}", t.id, t.name);
+    }
 
     println!("hohoho");
 }
@@ -37,7 +55,6 @@ mod tests {
     use super::*;
     use crate::database::models::model_category::*;
     use crate::database::schema::category::dsl::*;
-    use crate::database::schema::recipe::dsl::*;
     use crate::database::schema::recipe_category::dsl::*;
     use diesel::dsl::count;
     use diesel_migrations::*;

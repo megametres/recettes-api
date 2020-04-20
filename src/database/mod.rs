@@ -13,7 +13,7 @@ pub fn get_recipes() -> Vec<Recipe> {
 
     let connection = establish_connection();
 
-    load_recipe();
+    load_recipe(1);
 
     recipe
         .load::<Recipe>(&connection)
