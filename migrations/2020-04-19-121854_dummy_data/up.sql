@@ -187,3 +187,151 @@ VALUES
   (5, 1, 5),
   (6, 1, 6),
   (7, 1, 7);
+INSERT INTO "recipe"
+VALUES
+  (
+    2,
+    'Confit de canard sous vide',
+    'Ricardocuisine',
+    'https://images.ricardocuisine.com/services/recipes/8645.jpg',
+    'PT10M',
+    'PT36H',
+    'PT36H10M',
+    '1 portion',
+    'Confit de canard sous vide | RICARDO',
+    '{
+    "name": "Confit de canard sous vide",
+    "author": {
+        "@type": "Person",
+        "name": "Ricardocuisine"
+    },
+    "image": "https://images.ricardocuisine.com/services/recipes/8645.jpg",
+    "datePublished": "2019-11-19T18:20:39+0000",
+    "prepTime": "PT10M",
+    "cookTime": "PT36H",
+    "recipeIngredient": [
+        "5 ml (1 c. \u00e0 th\u00e9) de fleur de sel (ou de sel casher)",
+        "1 ml (1/4 c. \u00e0 th\u00e9) de poivre moulu",
+        "1 cuisse de canard",
+        "1 gousse d\u2019ail, pel\u00e9e et l\u00e9g\u00e8rement \u00e9cras\u00e9e",
+        "1 feuille de laurier",
+        "2 branches de thym"
+    ],
+    "recipeInstructions": [
+        {
+            "@type": "HowToSection",
+            "name": "",
+            "itemListElement": [
+                {
+                    "@type": "HowToStep",
+                    "text": "Pr\u00e9chauffer l\u2019eau au cuiseur de pr\u00e9cision \u00e0 68\u00a0\u00b0C (155\u00a0\u00b0F)."
+                },
+                {
+                    "@type": "HowToStep",
+                    "text": "Dans un bol, verser le sel et le poivre sur la cuisse de canard. Frotter pendant 1 minute. Placer le tout dans un sac \u00e0 fermeture herm\u00e9tique avec le reste des ingr\u00e9dients."
+                },
+                {
+                    "@type": "HowToStep",
+                    "text": "Placer dans l\u2019eau pr\u00e9chauff\u00e9e. Cuire 36 heures. Ajouter de l\u2019eau, au besoin, pour s\u2019assurer que la viande soit toujours submerg\u00e9e."
+                }
+            ]
+        }
+    ],
+    "recipeYield": "1 portion",
+    "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": 5,
+        "ratingCount": 8,
+        "bestRating": "5",
+        "worstRating": "1"
+    },
+    "nutrition": null,
+    "description": "Confit de canard sous vide | RICARDO",
+    "recipeCategory": "Plats principaux",
+    "keywords": "sous vide, recettes avec sous vide, recettes sous vide, cuisiner au sous vide, canard sous vide, recettes canard, canard, cuiseur de pr\u00e9cision, thermocirculateur",
+    "totalTime": "PT36H10M",
+    "review": [],
+    "video": [],
+    "@context": "http://schema.org",
+    "@type": "Recipe"
+}'
+  );
+INSERT INTO "main"."category"("id", "name")
+VALUES
+  (2, 'Plats principaux');
+INSERT INTO "main"."recipe_category"("id", "recipe_id", "category_id")
+VALUES
+  (2, 2, 2);
+INSERT INTO "main"."ingredient"("id", "name")
+VALUES
+  (
+    10,
+    '5 ml (1 c. \u00e0 th\u00e9) de fleur de sel (ou de sel casher)"'
+  ),
+  (
+    11,
+    '1 ml (1/4 c. \u00e0 th\u00e9) de poivre moulu"'
+  ),
+  (12, '1 cuisse de canard"'),
+  (
+    13,
+    '1 gousse d\u2019ail, pel\u00e9e et l\u00e9g\u00e8rement \u00e9cras\u00e9e"'
+  ),
+  (14, '1 feuille de laurier"'),
+  (15, '2 branches de thym"');
+INSERT INTO "main"."recipe_ingredient"("id", "recipe_id", "ingredient_id")
+VALUES
+  (10, 2, 10),
+  (11, 2, 11),
+  (12, 2, 12),
+  (13, 2, 13),
+  (14, 2, 14),
+  (15, 2, 15);
+INSERT INTO "main"."recipe_how_to_section"("id", "recipe_id", "how_to_section_id")
+VALUES
+  (2, 2, 1);
+INSERT INTO "main"."how_to_step"("id", "name")
+VALUES
+  (
+    7,
+    'Pr\u00e9chauffer l\u2019eau au cuiseur de pr\u00e9cision \u00e0 68\u00a0\u00b0C (155\u00a0\u00b0F).'
+  ),
+  (
+    8,
+    'Dans un bol, verser le sel et le poivre sur la cuisse de canard. Frotter pendant 1 minute. Placer le tout dans un sac \u00e0 fermeture herm\u00e9tique avec le reste des ingr\u00e9dients.'
+  ),
+  (
+    9,
+    'Placer dans l\u2019eau pr\u00e9chauff\u00e9e. Cuire 36 heures. Ajouter de l\u2019eau, au besoin, pour s\u2019assurer que la viande soit toujours submerg\u00e9e.'
+  );
+INSERT INTO "main"."recipe_how_to_section_how_to_step"(
+    "id",
+    "recipe_how_to_section_id",
+    "how_to_step_id"
+  )
+VALUES
+  (7, 2, 7),
+  (8, 2, 8),
+  (9, 2, 9);
+INSERT INTO "main"."keyword"("id", "name")
+VALUES
+  (8, 'sous vide'),
+  (9, 'recettes avec sous vide'),
+  (10, 'recettes sous vide'),
+  (11, 'cuisiner au sous vide'),
+  (12, 'canard sous vide'),
+  (13, 'recettes canard'),
+  (14, 'canard'),
+  (15, 'cuiseur de pr\u00e9cision'),
+  (16, 'thermocirculateur');
+INSERT INTO "main"."recipe_keyword"("id", "recipe_id", "keyword_id")
+VALUES
+  (8, 2, 8),
+  (9, 2, 9),
+  (10, 2, 10),
+  (11, 2, 11),
+  (12, 2, 12),
+  (13, 2, 13),
+  (14, 2, 14),
+  (15, 2, 15),
+  (16, 2, 16);

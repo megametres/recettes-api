@@ -2,6 +2,11 @@ extern crate diesel_migrations;
 extern crate dotenv;
 
 use super::models::model_category::*;
+use super::models::model_how_to_section::*;
+use super::models::model_how_to_section_full::*;
+use super::models::model_how_to_step::*;
+use super::models::model_ingredient::*;
+use super::models::model_keyword::*;
 use super::models::model_recipe::*;
 use super::models::model_recipe_full::*;
 
@@ -21,7 +26,7 @@ pub fn establish_connection() -> SqliteConnection {
         .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
 }
 
-pub fn load_recipe(recipe_id: i32) {
+pub fn load_recipe(recipe_id: i32) -> RecipeFull {
     use crate::database::schema::*;
 
     let connection = establish_connection();
@@ -31,23 +36,67 @@ pub fn load_recipe(recipe_id: i32) {
         .get_result::<Recipe>(&connection)
         .unwrap();
 
-    let queried_category_ids =
-        RecipeCategory::belonging_to(&queried_recipe).load::<RecipeCategory>(&connection);
-
-    let queried_category = category::table
+    let queried_category = RecipeCategory::belonging_to(&queried_recipe)
+        .inner_join(category::table)
+        .select(category::all_columns)
         .load::<Category>(&connection)
-        .expect("could not load tags");
+        .unwrap();
 
-    println!(
-        "Recipe {} has {} categories.",
-        queried_recipe.name,
-        queried_category.len()
-    );
-    for t in queried_category {
-        println!("{}: {}", t.id, t.name);
+    let queried_how_to_section = RecipeHowToSection::belonging_to(&queried_recipe)
+        .inner_join(how_to_section::table)
+        .select(how_to_section::all_columns)
+        .load::<HowToSection>(&connection)
+        .unwrap();
+
+    let queried_recipe_how_to_section = RecipeHowToSection::belonging_to(&queried_recipe)
+        .inner_join(how_to_section::table)
+        .select(recipe_how_to_section::all_columns)
+        .load::<RecipeHowToSection>(&connection)
+        .unwrap();
+
+    let mut queried_how_to_section_full: Vec<RecipeHowToSectionFull> = Vec::new();
+
+    for i in 0..queried_recipe_how_to_section.len() {
+        let queried_how_to_step =
+            RecipeHowToStep::belonging_to(queried_recipe_how_to_section.get(i).unwrap())
+                .inner_join(how_to_step::table)
+                .select(how_to_step::all_columns)
+                .load::<HowToStep>(&connection)
+                .unwrap();
+        queried_how_to_section_full.push(RecipeHowToSectionFull {
+            id: queried_recipe_how_to_section.get(0).unwrap().id,
+            name: queried_how_to_section.get(i).unwrap().name.to_owned(),
+            how_to_steps: queried_how_to_step,
+        });
     }
 
-    println!("hohoho");
+    let queried_ingredient = RecipeIngredient::belonging_to(&queried_recipe)
+        .inner_join(ingredient::table)
+        .select(ingredient::all_columns)
+        .load::<Ingredient>(&connection)
+        .unwrap();
+
+    let queried_keyword = RecipeKeyword::belonging_to(&queried_recipe)
+        .inner_join(keyword::table)
+        .select(keyword::all_columns)
+        .load::<Keyword>(&connection)
+        .unwrap();
+
+    RecipeFull {
+        id: queried_recipe.id,
+        name: queried_recipe.name,
+        author: queried_recipe.author,
+        image: queried_recipe.image,
+        prep_time: queried_recipe.prep_time,
+        cook_time: queried_recipe.cook_time,
+        total_time: queried_recipe.total_time,
+        recipe_yield: queried_recipe.recipe_yield,
+        description: queried_recipe.description,
+        categories: queried_category,
+        keywords: queried_keyword,
+        ingredients: queried_ingredient,
+        how_to_section_full: queried_how_to_section_full,
+    }
 }
 
 #[cfg(test)]
