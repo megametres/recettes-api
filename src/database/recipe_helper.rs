@@ -99,19 +99,84 @@ pub fn load_recipe(recipe_id: i32) -> RecipeFull {
     }
 }
 
+pub fn save_recipe(recipe_to_save: RecipeFull) -> bool {
+    println!("hahaha");
+    use super::*;
+    use crate::database::schema::category::dsl::*;
+    use crate::diesel::associations::HasTable;
+
+    let connection = establish_connection();
+
+    // Inserting the recipe categories
+
+    let ha = NewCategory { name: "Category A" };
+
+    // diesel::insert_into(category::table)
+    //     .values(&ha)
+    //     .execute(connection)
+    //     .unwrap_or_else(|_| panic!("{}", "Error saving categories"));
+
+    true
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::database::models::model_category::*;
     use crate::database::schema::category::dsl::*;
+    use crate::database::schema::how_to_section::dsl::*;
+    use crate::database::schema::how_to_step::dsl::*;
+    use crate::database::schema::ingredient::dsl::*;
+    use crate::database::schema::keyword::dsl::*;
     use crate::database::schema::recipe_category::dsl::*;
+    use crate::database::schema::recipe_how_to_section::dsl::*;
+    use crate::database::schema::recipe_how_to_section_how_to_step::dsl::*;
+    use crate::database::schema::recipe_ingredient::dsl::*;
+    use crate::database::schema::recipe_keyword::dsl::*;
+
     use diesel::dsl::count;
     use diesel_migrations::*;
 
     fn setup_test_db() -> SqliteConnection {
         let connection = SqliteConnection::establish(":memory:").unwrap();
         run_pending_migrations(&connection).expect("Fail to run migrations");
+        reset_db(&connection);
         connection
+    }
+
+    fn reset_db(connection: &SqliteConnection) {
+        diesel::delete(recipe_category)
+            .execute(connection)
+            .expect("could not delete recipe_category associations");
+        diesel::delete(category)
+            .execute(connection)
+            .expect("could not delete category");
+        diesel::delete(recipe_keyword)
+            .execute(connection)
+            .expect("could not delete recipe_keyword associations");
+        diesel::delete(keyword)
+            .execute(connection)
+            .expect("could not delete keyword");
+        diesel::delete(recipe_ingredient)
+            .execute(connection)
+            .expect("could not delete recipe_ingredient associations");
+        diesel::delete(ingredient)
+            .execute(connection)
+            .expect("could not delete ingredient");
+        diesel::delete(recipe_how_to_section)
+            .execute(connection)
+            .expect("could not delete recipe_how_to_section associations");
+        diesel::delete(how_to_section)
+            .execute(connection)
+            .expect("could not delete how_to_section");
+        diesel::delete(recipe_how_to_section_how_to_step)
+            .execute(connection)
+            .expect("could not delete recipe_how_to_section_how_to_step associations");
+        diesel::delete(how_to_step)
+            .execute(connection)
+            .expect("could not delete how_to_step");
+        diesel::delete(recipe)
+            .execute(connection)
+            .expect("could not delete recipe");
     }
 
     fn dummy_category_a<'a>() -> NewCategory<'a> {
