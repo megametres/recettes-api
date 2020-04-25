@@ -45,6 +45,41 @@ lazy_static! {
     };
 }
 
+#[derive(Debug)]
+pub struct ConnectionOptions {
+    pub enable_foreign_keys: bool,
+    pub busy_timeout: Option<std::time::Duration>,
+}
+
+impl ConnectionOptions {
+    pub fn apply(&self, connection: &SqliteConnection) -> QueryResult<()> {
+        if self.enable_foreign_keys {
+            connection.execute("PRAGMA foreign_keys = ON;")?;
+        }
+        if let Some(duration) = self.busy_timeout {
+            connection.execute(&format!("PRAGMA busy_timeout = {};", duration.as_millis()))?;
+        }
+        Ok(())
+    }
+}
+
+impl Default for ConnectionOptions {
+    fn default() -> Self {
+        Self {
+            enable_foreign_keys: true,
+            busy_timeout: Some(std::time::Duration::from_secs(60)),
+        }
+    }
+}
+
+impl diesel::r2d2::CustomizeConnection<SqliteConnection, diesel::r2d2::Error>
+    for ConnectionOptions
+{
+    fn on_acquire(&self, conn: &mut SqliteConnection) -> Result<(), diesel::r2d2::Error> {
+        self.apply(conn).map_err(diesel::r2d2::Error::QueryError)
+    }
+}
+
 pub fn establish_connection(
 ) -> diesel::r2d2::PooledConnection<diesel::r2d2::ConnectionManager<diesel::SqliteConnection>> {
     dotenv().ok();
