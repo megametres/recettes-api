@@ -12,18 +12,44 @@ use super::models::model_recipe_full::*;
 
 use crate::database::schema::recipe::dsl::*;
 
+use diesel::prelude::*;
+use diesel::r2d2::{ConnectionManager, Pool, PoolError, PooledConnection};
 use dotenv::dotenv;
+use lazy_static::lazy_static;
 use std::env;
 
-use diesel::prelude::*;
+type SqlitePool = Pool<ConnectionManager<SqliteConnection>>;
 
-pub fn establish_connection() -> SqliteConnection {
+pub struct Values {
+    pub db_connection: SqlitePool,
+}
+
+lazy_static! {
+    pub static ref DB_POOL: Values = {
+        Values {
+            db_connection: SqlitePool::builder()
+                .max_size(8)
+                .build(ConnectionManager::new(
+                    env::var("DATABASE_URL").expect("DATABASE_URL must be set"),
+                ))
+                .expect("failed to create db connection_pool"),
+        }
+    };
+    pub static ref DB_TEST_POOL: Values = {
+        Values {
+            db_connection: SqlitePool::builder()
+                .max_size(8)
+                .build(ConnectionManager::new("test.db"))
+                .expect("failed to create test db connection_pool"),
+        }
+    };
+}
+
+pub fn establish_connection(
+) -> diesel::r2d2::PooledConnection<diesel::r2d2::ConnectionManager<diesel::SqliteConnection>> {
     dotenv().ok();
 
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-
-    SqliteConnection::establish(&database_url)
-        .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
+    DB_POOL.db_connection.get().unwrap()
 }
 
 pub fn load_recipe(recipe_id: i32) -> RecipeFull {
@@ -136,9 +162,13 @@ mod tests {
     use diesel::dsl::count;
     use diesel_migrations::*;
 
-    fn setup_test_db() -> SqliteConnection {
-        let connection = SqliteConnection::establish(":memory:").unwrap();
+    fn setup_test_db(
+    ) -> diesel::r2d2::PooledConnection<diesel::r2d2::ConnectionManager<diesel::SqliteConnection>>
+    {
+        dotenv().ok();
+        let connection = DB_TEST_POOL.db_connection.get().unwrap();
         run_pending_migrations(&connection).expect("Fail to run migrations");
+
         reset_db(&connection);
         connection
     }
@@ -378,5 +408,139 @@ mod tests {
             test_recipe_category_a.category_id,
             result.get(0).unwrap().category_id
         );
+    }
+    #[test]
+    fn test_save_recipe() {
+        use crate::database::schema::*;
+
+        let connection = setup_test_db();
+
+        let test_category = vec![Category {
+            id: 1,
+            name: "Desserts".to_owned(),
+        }];
+
+        let test_ingredient = vec![
+            Ingredient {
+                id: 1,
+                name: r"375 ml (1 1/2 tasse) de farine tout usage non blanchie".to_owned(),
+            },
+            Ingredient {
+                id: 2,
+                name: r"250 ml (1 tasse) de poudre d\u2019amandes".to_owned(),
+            },
+            Ingredient {
+                id: 3,
+                name: r"5 ml (1 c. \u00e0 th\u00e9) de poudre \u00e0 p\u00e2te".to_owned(),
+            },
+            Ingredient {
+                id: 4,
+                name: r"1 ml (1/4 c. \u00e0 th\u00e9) de sel".to_owned(),
+            },
+            Ingredient {
+                id: 5,
+                name: r"180 ml (3/4 tasse) de beurre non sal\u00e9, ramolli".to_owned(),
+            },
+            Ingredient {
+                id: 6,
+                name: r"250 ml (1 tasse) de sucre \u00e0 glacer".to_owned(),
+            },
+            Ingredient {
+                id: 7,
+                name: r"15 ml (1 c. \u00e0 soupe) d\u2019eau froide".to_owned(),
+            },
+            Ingredient {
+                id: 8,
+                name: r"5 ml (1 c. \u00e0 th\u00e9) d\u2019extrait de vanille".to_owned(),
+            },
+            Ingredient {
+                id: 9,
+                name: r"1 ml (1/4 c. \u00e0 th\u00e9) d\u2019extrait d\u2019amande (facultatif)"
+                    .to_owned(),
+            },
+        ];
+
+        let test_keyword = vec![
+            Keyword {
+                id: 1,
+                name: r"recettes de No\u00ebl".to_owned(),
+            },
+            Keyword {
+                id: 2,
+                name: r"desserts de No\u00ebl".to_owned(),
+            },
+            Keyword {
+                id: 3,
+                name: r"biscuits de No\u00ebl".to_owned(),
+            },
+            Keyword {
+                id: 4,
+                name: r"biscuits sabl\u00e9s au beurre".to_owned(),
+            },
+            Keyword {
+                id: 5,
+                name: r"recettes de biscuits sabl\u00e9s au beurre".to_owned(),
+            },
+            Keyword {
+                id: 6,
+                name: r"biscuits".to_owned(),
+            },
+            Keyword {
+                id: 7,
+                name: r"recettes de biscuits".to_owned(),
+            },
+        ];
+
+        let recipe_how_to_step = vec![
+            HowToStep{
+                id: 1,
+                name: r"Dans un bol, m\u00e9langer la farine, la poudre d\u2019amandes, la poudre \u00e0 p\u00e2te et le sel. R\u00e9server.".to_owned(),
+            },
+            HowToStep{
+                id: 2,
+                name: r"Dans un autre bol, cr\u00e9mer le beurre avec le sucre \u00e0 glacer, l\u2019eau, la vanille et l\u2019extrait d\u2019amandes au batteur \u00e9lectrique. \u00c0 basse vitesse ou \u00e0 la cuill\u00e8re de bois, incorporer les ingr\u00e9dients secs.".to_owned(),
+            },
+            HowToStep{
+                id: 3,
+                name: r"Sur un plan de travail, d\u00e9poser la p\u00e2te sur une feuille de papier parchemin ou de papier d\u2019aluminium. Former un rouleau d\u2019environ 5\u00a0cm (2 po) de diam\u00e8tre. Refermer le rouleau en tortillant les deux extr\u00e9mit\u00e9s du papier d\u2019aluminium. R\u00e9frig\u00e9rer environ 3 heures ou jusqu\u2019\u00e0 ce que la p\u00e2te soit tr\u00e8s ferme au toucher.".to_owned(),
+            },
+            HowToStep{
+                id: 4,
+                name: r"Placer la grille au centre du four. Pr\u00e9chauffer le four \u00e0 190\u00a0\u00b0C (375 \u00b0F). Tapisser deux plaques \u00e0 biscuits de papier parchemin.".to_owned(),
+            },
+            HowToStep{
+                id: 5,
+                name: r"D\u00e9baller et placer le rouleau sur un plan de travail. Couper en tranches d\u2019environ 1 cm (\u00bd po) d\u2019\u00e9paisseur et les r\u00e9partir sur les plaques. ".to_owned(),
+            },
+            HowToStep{
+                id: 6,
+                name: r"Cuire au four, une plaque \u00e0 la fois, environ 12 minutes, ou jusqu\u2019\u00e0 ce que les biscuits soient l\u00e9g\u00e8rement dor\u00e9s. Laisser refroidir sur la plaque.".to_owned(),
+            },
+];
+
+        let recipe_how_to_section_full = vec![RecipeHowToSectionFull {
+            id: 1,
+            name: "".to_owned(),
+            how_to_steps: recipe_how_to_step,
+        }];
+
+        let test_recipe = RecipeFull {
+            id: 1,
+            name: r"Biscuits au beurre r\u00e9frig\u00e9rateur".to_owned(),
+            author: r"Ricardocuisine".to_owned(),
+            image: r"https://images.ricardocuisine.com/services/recipes/4934.jpg".to_owned(),
+            prep_time: r"PT20M".to_owned(),
+            cook_time: r"PT12M".to_owned(),
+            total_time: r"PT32M".to_owned(),
+            recipe_yield: r"40 biscuits, environ".to_owned(),
+            description: r"Recette de Ricardo de biscuits au beurre r\u00e9frig\u00e9rateur"
+                .to_owned(),
+            categories: test_category,
+            keywords: test_keyword,
+            ingredients: test_ingredient,
+            how_to_section_full: recipe_how_to_section_full,
+        };
+
+        assert!(save_recipe(test_recipe));
     }
 }

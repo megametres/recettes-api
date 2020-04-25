@@ -5,14 +5,17 @@ authors = ["Daniel Sauvé <daniel@xn--sauv-epa.com>"]
 edition = "2018"
 
 [dependencies]
-diesel = { version = "1.4.4", features = ["sqlite"] }
+diesel = { version = "1.4.4", features = ["sqlite", "r2d2"] }
 diesel_migrations = "1.4.0"
 dotenv = "0.15.0"
+lazy_static = "1.4.0"
 serde = { version = "1.0", features = ["derive"] }
 rocket = "0.4.4"
 rocket_okapi = "0.4.1"
 schemars = "0.7.1"
 okapi = { version = "0.4.0", features = ["derive_json_schema"] }
+r2d2 = { version = "0.8.8"}
+r2d2_sqlite = { version = "0.15.0"}
 
 
 [dependencies.rocket_contrib]
