@@ -13,78 +13,16 @@ use super::models::model_recipe_full::*;
 use crate::database::schema::recipe::dsl::*;
 
 use diesel::prelude::*;
-use diesel::r2d2::{ConnectionManager, Pool, PoolError, PooledConnection};
 use dotenv::dotenv;
-use lazy_static::lazy_static;
 use std::env;
 
-type SqlitePool = Pool<ConnectionManager<SqliteConnection>>;
-
-pub struct Values {
-    pub db_connection: SqlitePool,
-}
-
-lazy_static! {
-    pub static ref DB_POOL: Values = {
-        Values {
-            db_connection: SqlitePool::builder()
-                .max_size(8)
-                .build(ConnectionManager::new(
-                    env::var("DATABASE_URL").expect("DATABASE_URL must be set"),
-                ))
-                .expect("failed to create db connection_pool"),
-        }
-    };
-    pub static ref DB_TEST_POOL: Values = {
-        Values {
-            db_connection: SqlitePool::builder()
-                .max_size(8)
-                .build(ConnectionManager::new("test.db"))
-                .expect("failed to create test db connection_pool"),
-        }
-    };
-}
-
-#[derive(Debug)]
-pub struct ConnectionOptions {
-    pub enable_foreign_keys: bool,
-    pub busy_timeout: Option<std::time::Duration>,
-}
-
-impl ConnectionOptions {
-    pub fn apply(&self, connection: &SqliteConnection) -> QueryResult<()> {
-        if self.enable_foreign_keys {
-            connection.execute("PRAGMA foreign_keys = ON;")?;
-        }
-        if let Some(duration) = self.busy_timeout {
-            connection.execute(&format!("PRAGMA busy_timeout = {};", duration.as_millis()))?;
-        }
-        Ok(())
-    }
-}
-
-impl Default for ConnectionOptions {
-    fn default() -> Self {
-        Self {
-            enable_foreign_keys: true,
-            busy_timeout: Some(std::time::Duration::from_secs(60)),
-        }
-    }
-}
-
-impl diesel::r2d2::CustomizeConnection<SqliteConnection, diesel::r2d2::Error>
-    for ConnectionOptions
-{
-    fn on_acquire(&self, conn: &mut SqliteConnection) -> Result<(), diesel::r2d2::Error> {
-        self.apply(conn).map_err(diesel::r2d2::Error::QueryError)
-    }
-}
-
-pub fn establish_connection(
-) -> diesel::r2d2::PooledConnection<diesel::r2d2::ConnectionManager<diesel::SqliteConnection>> {
+pub fn establish_connection() -> SqliteConnection {
     dotenv().ok();
 
-    DB_POOL.db_connection.get().unwrap()
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+
+    SqliteConnection::establish(&database_url)
+        .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
 }
 
 pub fn load_recipe(recipe_id: i32) -> RecipeFull {
@@ -197,13 +135,9 @@ mod tests {
     use diesel::dsl::count;
     use diesel_migrations::*;
 
-    fn setup_test_db(
-    ) -> diesel::r2d2::PooledConnection<diesel::r2d2::ConnectionManager<diesel::SqliteConnection>>
-    {
-        dotenv().ok();
-        let connection = DB_TEST_POOL.db_connection.get().unwrap();
+    fn setup_test_db() -> SqliteConnection {
+        let connection = SqliteConnection::establish(":memory:").unwrap();
         run_pending_migrations(&connection).expect("Fail to run migrations");
-
         reset_db(&connection);
         connection
     }
