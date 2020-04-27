@@ -12,16 +12,17 @@ use super::models::model_recipe_full::*;
 
 use crate::database::schema::recipe::dsl::*;
 
+use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use dotenv::dotenv;
 use std::env;
 
-pub fn establish_connection() -> SqliteConnection {
+pub fn establish_connection() -> PgConnection {
     dotenv().ok();
 
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
-    SqliteConnection::establish(&database_url)
+    PgConnection::establish(&database_url)
         .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
 }
 
@@ -99,21 +100,25 @@ pub fn load_recipe(recipe_id: i32) -> RecipeFull {
 }
 
 pub fn save_recipe(recipe_to_save: RecipeFull) -> bool {
-    println!("hahaha");
-    use super::*;
-    use crate::database::schema::category::dsl::*;
-    use crate::diesel::associations::HasTable;
+    use crate::database::schema::category;
+    use diesel::result::Error;
 
     let connection = establish_connection();
 
-    // Inserting the recipe categories
+    let test_category_a = NewCategory { name: "Category A" };
 
-    let ha = NewCategory { name: "Category A" };
+    // connection
+    //     .transaction::<_, Error, _>(|| {
+    //         let ha = diesel::insert_into(category::table)
+    //             .values(&test_category_a)
+    //             .get_results(&connection)
+    //             .unwrap_or_else(|_| {
+    //                 panic!("{}{}", "Error saving new category ", test_category_a.name)
+    //             });
 
-    // diesel::insert_into(category::table)
-    //     .values(&ha)
-    //     .execute(connection)
-    //     .unwrap_or_else(|_| panic!("{}", "Error saving categories"));
+    //         Ok(())
+    //     })
+    //     .unwrap_or_else(|_| panic!("{}", "Error saving new recipe"));
 
     true
 }
@@ -135,14 +140,20 @@ mod tests {
     use diesel::dsl::count;
     use diesel_migrations::*;
 
-    fn setup_test_db() -> SqliteConnection {
-        let connection = SqliteConnection::establish(":memory:").unwrap();
+    fn setup_test_db() -> PgConnection {
+        dotenv().ok();
+
+        let database_test_url =
+            env::var("DATABASE_TEST_URL").expect("DATABASE_TEST_URL must be set");
+
+        let connection = PgConnection::establish(&database_test_url).unwrap();
+
         run_pending_migrations(&connection).expect("Fail to run migrations");
         reset_db(&connection);
         connection
     }
 
-    fn reset_db(connection: &SqliteConnection) {
+    fn reset_db(connection: &PgConnection) {
         diesel::delete(recipe_category)
             .execute(connection)
             .expect("could not delete recipe_category associations");
@@ -161,15 +172,15 @@ mod tests {
         diesel::delete(ingredient)
             .execute(connection)
             .expect("could not delete ingredient");
+        diesel::delete(recipe_how_to_section_how_to_step)
+            .execute(connection)
+            .expect("could not delete recipe_how_to_section_how_to_step associations");
         diesel::delete(recipe_how_to_section)
             .execute(connection)
             .expect("could not delete recipe_how_to_section associations");
         diesel::delete(how_to_section)
             .execute(connection)
             .expect("could not delete how_to_section");
-        diesel::delete(recipe_how_to_section_how_to_step)
-            .execute(connection)
-            .expect("could not delete recipe_how_to_section_how_to_step associations");
         diesel::delete(how_to_step)
             .execute(connection)
             .expect("could not delete how_to_step");
@@ -200,7 +211,7 @@ mod tests {
         }
     }
 
-    fn dummy_recipe_category_a(connection: &SqliteConnection) -> NewRecipeCategory {
+    fn dummy_recipe_category_a(connection: &PgConnection) -> NewRecipeCategory {
         use crate::database::schema::*;
         let test_category_a = dummy_category_a();
         let test_recipe_a = dummy_recipe_a();

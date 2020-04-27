@@ -5,7 +5,7 @@ authors = ["Daniel Sauvé <daniel@xn--sauv-epa.com>"]
 edition = "2018"
 
 [dependencies]
-diesel = { version = "1.4.4", features = ["sqlite"] }
+diesel = { version = "1.4.4", features = ["postgres"] }
 diesel_migrations = "1.4.0"
 dotenv = "0.15.0"
 serde = { version = "1.0", features = ["derive"] }

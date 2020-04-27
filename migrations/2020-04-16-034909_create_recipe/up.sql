@@ -1,5 +1,5 @@
 CREATE TABLE "recipe" (
-  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
+  "id" SERIAL PRIMARY KEY,
   "name" VARCHAR NOT NULL,
   "author" VARCHAR NOT NULL,
   "image" VARCHAR NOT NULL,
@@ -11,55 +11,55 @@ CREATE TABLE "recipe" (
   "json_ld" TEXT NOT NULL
 );
 CREATE TABLE "category" (
-  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
+  "id" SERIAL PRIMARY KEY,
   "name" VARCHAR NOT NULL
 );
 CREATE TABLE "recipe_category" (
-  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
+  "id" SERIAL PRIMARY KEY,
   "recipe_id" INTEGER NOT NULL,
   "category_id" INTEGER NOT NULL,
   FOREIGN KEY("recipe_id") REFERENCES recipe("id"),
   FOREIGN KEY("category_id") REFERENCES category("id")
 );
 CREATE TABLE "ingredient" (
-  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
+  "id" SERIAL PRIMARY KEY,
   "name" VARCHAR NOT NULL
 );
 CREATE TABLE "recipe_ingredient" (
-  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
+  "id" SERIAL PRIMARY KEY,
   "recipe_id" INTEGER NOT NULL,
   "ingredient_id" INTEGER NOT NULL,
   FOREIGN KEY("recipe_id") REFERENCES recipe("id"),
   FOREIGN KEY("ingredient_id") REFERENCES ingredient("id")
 );
 CREATE TABLE "how_to_section" (
-  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
+  "id" SERIAL PRIMARY KEY,
   "name" VARCHAR NOT NULL
 );
 CREATE TABLE "recipe_how_to_section" (
-  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
+  "id" SERIAL PRIMARY KEY,
   "recipe_id" INTEGER NOT NULL,
   "how_to_section_id" INTEGER NOT NULL,
   FOREIGN KEY("recipe_id") REFERENCES recipe("id"),
   FOREIGN KEY("how_to_section_id") REFERENCES how_to_section("id")
 );
 CREATE TABLE "how_to_step" (
-  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
+  "id" SERIAL PRIMARY KEY,
   "name" text NOT NULL
 );
 CREATE TABLE "recipe_how_to_section_how_to_step" (
-  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
+  "id" SERIAL PRIMARY KEY,
   "recipe_how_to_section_id" INTEGER NOT NULL,
   "how_to_step_id" INTEGER NOT NULL,
   FOREIGN KEY("recipe_how_to_section_id") REFERENCES recipe_how_to_section("id"),
   FOREIGN KEY("how_to_step_id") REFERENCES how_to_step("id")
 );
 CREATE TABLE "keyword" (
-  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
+  "id" SERIAL PRIMARY KEY,
   "name" VARCHAR NOT NULL
 );
 CREATE TABLE "recipe_keyword" (
-  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
+  "id" SERIAL PRIMARY KEY,
   "recipe_id" INTEGER NOT NULL,
   "keyword_id" INTEGER NOT NULL,
   FOREIGN KEY("recipe_id") REFERENCES recipe("id"),

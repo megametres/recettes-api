@@ -82,13 +82,13 @@ VALUES
     "@type": "Recipe"
 }'
   );
-INSERT INTO "main"."category"("id", "name")
+INSERT INTO "category"("id", "name")
 VALUES
   (1, 'Desserts');
-INSERT INTO "main"."recipe_category"("id", "recipe_id", "category_id")
+INSERT INTO "recipe_category"("id", "recipe_id", "category_id")
 VALUES
   (1, 1, 1);
-INSERT INTO "main"."ingredient"("id", "name")
+INSERT INTO "ingredient"("id", "name")
 VALUES
   (
     1,
@@ -114,7 +114,7 @@ VALUES
     9,
     '1 ml (1/4 c. \u00e0 th\u00e9) d\u2019extrait d\u2019amande (facultatif)'
   );
-INSERT INTO "main"."recipe_ingredient"("id", "recipe_id", "ingredient_id")
+INSERT INTO "recipe_ingredient"("id", "recipe_id", "ingredient_id")
 VALUES
   (1, 1, 1),
   (2, 1, 2),
@@ -125,13 +125,13 @@ VALUES
   (7, 1, 7),
   (8, 1, 8),
   (9, 1, 9);
-INSERT INTO "main"."how_to_section"("id", "name")
+INSERT INTO "how_to_section"("id", "name")
 VALUES
   (1, '');
-INSERT INTO "main"."recipe_how_to_section"("id", "recipe_id", "how_to_section_id")
+INSERT INTO "recipe_how_to_section"("id", "recipe_id", "how_to_section_id")
 VALUES
   (1, 1, 1);
-INSERT INTO "main"."how_to_step"("id", "name")
+INSERT INTO "how_to_step"("id", "name")
 VALUES
   (
     1,
@@ -157,7 +157,7 @@ VALUES
     6,
     'Cuire au four, une plaque \u00e0 la fois, environ 12 minutes, ou jusqu\u2019\u00e0 ce que les biscuits soient l\u00e9g\u00e8rement dor\u00e9s. Laisser refroidir sur la plaque.'
   );
-INSERT INTO "main"."recipe_how_to_section_how_to_step"(
+INSERT INTO "recipe_how_to_section_how_to_step"(
     "id",
     "recipe_how_to_section_id",
     "how_to_step_id"
@@ -169,7 +169,7 @@ VALUES
   (4, 1, 4),
   (5, 1, 5),
   (6, 1, 6);
-INSERT INTO "main"."keyword"("id", "name")
+INSERT INTO "keyword"("id", "name")
 VALUES
   (1, 'recettes de No\u00ebl'),
   (2, 'desserts de No\u00ebl'),
@@ -178,7 +178,7 @@ VALUES
   (5, 'recettes de biscuits sabl\u00e9s au beurre'),
   (6, 'biscuits'),
   (7, 'recettes de biscuits');
-INSERT INTO "main"."recipe_keyword"("id", "recipe_id", "keyword_id")
+INSERT INTO "recipe_keyword"("id", "recipe_id", "keyword_id")
 VALUES
   (1, 1, 1),
   (2, 1, 2),
@@ -256,13 +256,13 @@ VALUES
     "@type": "Recipe"
 }'
   );
-INSERT INTO "main"."category"("id", "name")
+INSERT INTO "category"("id", "name")
 VALUES
   (2, 'Plats principaux');
-INSERT INTO "main"."recipe_category"("id", "recipe_id", "category_id")
+INSERT INTO "recipe_category"("id", "recipe_id", "category_id")
 VALUES
   (2, 2, 2);
-INSERT INTO "main"."ingredient"("id", "name")
+INSERT INTO "ingredient"("id", "name")
 VALUES
   (
     10,
@@ -279,7 +279,7 @@ VALUES
   ),
   (14, '1 feuille de laurier"'),
   (15, '2 branches de thym"');
-INSERT INTO "main"."recipe_ingredient"("id", "recipe_id", "ingredient_id")
+INSERT INTO "recipe_ingredient"("id", "recipe_id", "ingredient_id")
 VALUES
   (10, 2, 10),
   (11, 2, 11),
@@ -287,10 +287,10 @@ VALUES
   (13, 2, 13),
   (14, 2, 14),
   (15, 2, 15);
-INSERT INTO "main"."recipe_how_to_section"("id", "recipe_id", "how_to_section_id")
+INSERT INTO "recipe_how_to_section"("id", "recipe_id", "how_to_section_id")
 VALUES
   (2, 2, 1);
-INSERT INTO "main"."how_to_step"("id", "name")
+INSERT INTO "how_to_step"("id", "name")
 VALUES
   (
     7,
@@ -304,7 +304,7 @@ VALUES
     9,
     'Placer dans l\u2019eau pr\u00e9chauff\u00e9e. Cuire 36 heures. Ajouter de l\u2019eau, au besoin, pour s\u2019assurer que la viande soit toujours submerg\u00e9e.'
   );
-INSERT INTO "main"."recipe_how_to_section_how_to_step"(
+INSERT INTO "recipe_how_to_section_how_to_step"(
     "id",
     "recipe_how_to_section_id",
     "how_to_step_id"
@@ -313,7 +313,7 @@ VALUES
   (7, 2, 7),
   (8, 2, 8),
   (9, 2, 9);
-INSERT INTO "main"."keyword"("id", "name")
+INSERT INTO "keyword"("id", "name")
 VALUES
   (8, 'sous vide'),
   (9, 'recettes avec sous vide'),
@@ -324,7 +324,7 @@ VALUES
   (14, 'canard'),
   (15, 'cuiseur de pr\u00e9cision'),
   (16, 'thermocirculateur');
-INSERT INTO "main"."recipe_keyword"("id", "recipe_id", "keyword_id")
+INSERT INTO "recipe_keyword"("id", "recipe_id", "keyword_id")
 VALUES
   (8, 2, 8),
   (9, 2, 9),

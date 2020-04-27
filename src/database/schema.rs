@@ -1,48 +1,48 @@
 table! {
     category (id) {
-        id -> Integer,
-        name -> Text,
+        id -> Int4,
+        name -> Varchar,
     }
 }
 
 table! {
     how_to_section (id) {
-        id -> Integer,
-        name -> Text,
+        id -> Int4,
+        name -> Varchar,
     }
 }
 
 table! {
     how_to_step (id) {
-        id -> Integer,
+        id -> Int4,
         name -> Text,
     }
 }
 
 table! {
     ingredient (id) {
-        id -> Integer,
-        name -> Text,
+        id -> Int4,
+        name -> Varchar,
     }
 }
 
 table! {
     keyword (id) {
-        id -> Integer,
-        name -> Text,
+        id -> Int4,
+        name -> Varchar,
     }
 }
 
 table! {
     recipe (id) {
-        id -> Integer,
-        name -> Text,
-        author -> Text,
-        image -> Text,
-        prep_time -> Text,
-        cook_time -> Text,
-        total_time -> Text,
-        recipe_yield -> Text,
+        id -> Int4,
+        name -> Varchar,
+        author -> Varchar,
+        image -> Varchar,
+        prep_time -> Varchar,
+        cook_time -> Varchar,
+        total_time -> Varchar,
+        recipe_yield -> Varchar,
         description -> Text,
         json_ld -> Text,
     }
@@ -50,41 +50,41 @@ table! {
 
 table! {
     recipe_category (id) {
-        id -> Integer,
-        recipe_id -> Integer,
-        category_id -> Integer,
+        id -> Int4,
+        recipe_id -> Int4,
+        category_id -> Int4,
     }
 }
 
 table! {
     recipe_how_to_section (id) {
-        id -> Integer,
-        recipe_id -> Integer,
-        how_to_section_id -> Integer,
+        id -> Int4,
+        recipe_id -> Int4,
+        how_to_section_id -> Int4,
     }
 }
 
 table! {
     recipe_how_to_section_how_to_step (id) {
-        id -> Integer,
-        recipe_how_to_section_id -> Integer,
-        how_to_step_id -> Integer,
+        id -> Int4,
+        recipe_how_to_section_id -> Int4,
+        how_to_step_id -> Int4,
     }
 }
 
 table! {
     recipe_ingredient (id) {
-        id -> Integer,
-        recipe_id -> Integer,
-        ingredient_id -> Integer,
+        id -> Int4,
+        recipe_id -> Int4,
+        ingredient_id -> Int4,
     }
 }
 
 table! {
     recipe_keyword (id) {
-        id -> Integer,
-        recipe_id -> Integer,
-        keyword_id -> Integer,
+        id -> Int4,
+        recipe_id -> Int4,
+        keyword_id -> Int4,
     }
 }
 
