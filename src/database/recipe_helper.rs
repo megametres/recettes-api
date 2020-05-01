@@ -10,7 +10,7 @@ use super::models::model_keyword::*;
 use super::models::model_recipe::*;
 use super::models::model_recipe_full::*;
 
-use crate::database::schema::recipe::dsl::*;
+use super::schema::recipe::dsl::*;
 
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
@@ -26,61 +26,86 @@ pub fn establish_connection() -> PgConnection {
         .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
 }
 
-pub fn load_recipe(recipe_id: i32) -> RecipeFull {
-    use crate::database::schema::*;
+macro_rules! load_recipe_table {
+    ($connection:expr, $belongs_to:expr, $return_model:ty, $load_model:ty, $join_table:expr, $select_table:expr) => {
+        <$return_model>::belonging_to($belongs_to)
+            .inner_join($join_table)
+            .select($select_table)
+            .load::<$load_model>($connection)
+            .unwrap();
+    };
+}
 
-    let connection = establish_connection();
+pub fn load_recipe(connection: &PgConnection, recipe_id: i32) -> RecipeFull {
+    use crate::database::schema::*;
 
     let queried_recipe = recipe
         .find(recipe_id)
-        .get_result::<Recipe>(&connection)
+        .get_result::<Recipe>(connection)
         .unwrap();
 
-    let queried_category = RecipeCategory::belonging_to(&queried_recipe)
-        .inner_join(category::table)
-        .select(category::all_columns)
-        .load::<Category>(&connection)
-        .unwrap();
+    let queried_category = load_recipe_table!(
+        connection,
+        &queried_recipe,
+        RecipeCategory,
+        Category,
+        category::table,
+        category::all_columns
+    );
 
-    let queried_how_to_section = RecipeHowToSection::belonging_to(&queried_recipe)
-        .inner_join(how_to_section::table)
-        .select(how_to_section::all_columns)
-        .load::<HowToSection>(&connection)
-        .unwrap();
+    let queried_ingredient = load_recipe_table!(
+        connection,
+        &queried_recipe,
+        RecipeIngredient,
+        Ingredient,
+        ingredient::table,
+        ingredient::all_columns
+    );
 
-    let queried_recipe_how_to_section = RecipeHowToSection::belonging_to(&queried_recipe)
-        .inner_join(how_to_section::table)
-        .select(recipe_how_to_section::all_columns)
-        .load::<RecipeHowToSection>(&connection)
-        .unwrap();
+    let queried_keyword = load_recipe_table!(
+        connection,
+        &queried_recipe,
+        RecipeKeyword,
+        Keyword,
+        keyword::table,
+        keyword::all_columns
+    );
+
+    let queried_how_to_section = load_recipe_table!(
+        connection,
+        &queried_recipe,
+        RecipeHowToSection,
+        HowToSection,
+        how_to_section::table,
+        how_to_section::all_columns
+    );
+
+    let queried_recipe_how_to_section = load_recipe_table!(
+        connection,
+        &queried_recipe,
+        RecipeHowToSection,
+        RecipeHowToSection,
+        how_to_section::table,
+        recipe_how_to_section::all_columns
+    );
 
     let mut queried_how_to_section_full: Vec<RecipeHowToSectionFull> = Vec::new();
 
     for i in 0..queried_recipe_how_to_section.len() {
-        let queried_how_to_step =
-            RecipeHowToStep::belonging_to(queried_recipe_how_to_section.get(i).unwrap())
-                .inner_join(how_to_step::table)
-                .select(how_to_step::all_columns)
-                .load::<HowToStep>(&connection)
-                .unwrap();
+        let queried_how_to_step = load_recipe_table!(
+            connection,
+            queried_recipe_how_to_section.get(i).unwrap(),
+            RecipeHowToStep,
+            HowToStep,
+            how_to_step::table,
+            how_to_step::all_columns
+        );
         queried_how_to_section_full.push(RecipeHowToSectionFull {
             id: queried_recipe_how_to_section.get(0).unwrap().id,
             name: queried_how_to_section.get(i).unwrap().name.to_owned(),
             how_to_steps: queried_how_to_step,
         });
     }
-
-    let queried_ingredient = RecipeIngredient::belonging_to(&queried_recipe)
-        .inner_join(ingredient::table)
-        .select(ingredient::all_columns)
-        .load::<Ingredient>(&connection)
-        .unwrap();
-
-    let queried_keyword = RecipeKeyword::belonging_to(&queried_recipe)
-        .inner_join(keyword::table)
-        .select(keyword::all_columns)
-        .load::<Keyword>(&connection)
-        .unwrap();
 
     RecipeFull {
         id: queried_recipe.id,
@@ -99,13 +124,72 @@ pub fn load_recipe(recipe_id: i32) -> RecipeFull {
     }
 }
 
-pub fn save_recipe(recipe_to_save: RecipeFull) -> bool {
-    use crate::database::schema::category;
-    use diesel::result::Error;
+macro_rules! upsert_recipe_elements {
+    ($connection:expr, $table_name:ident, $model:ty, $elements:expr) => {{
+        let mut return_elements = Vec::new();
+        for x in $elements {
+            let inserted_element: Vec<$model> = diesel::insert_into($table_name::table)
+                .values($table_name::name.eq(x.name.to_owned()))
+                .on_conflict($table_name::name)
+                .do_update()
+                .set($table_name::name.eq(excluded($table_name::name)))
+                .returning(($table_name::id, $table_name::name))
+                .get_results::<$model>($connection)
+                .unwrap();
+            return_elements.push(inserted_element[0].id);
+        }
+        return_elements
+    }};
+}
 
-    let connection = establish_connection();
+// macro_rules! link_recipe_elements {
+//     ($connection:expr, $table_name:ident, $model:ty, $elements:expr) => {{
+//         let mut return_elements = Vec::new();
+//         for x in $elements {
+//             let inserted_element: Vec<$model> = diesel::insert_into($table_name::table)
+//                 .values($table_name::name.eq(x.name.to_owned()))
+//                 .on_conflict($table_name::name)
+//                 .do_update()
+//                 .set($table_name::name.eq(excluded($table_name::name)))
+//                 .returning(($table_name::id, $table_name::name))
+//                 .get_results::<$model>($connection)
+//                 .unwrap();
+//             return_elements.push(inserted_element[0].id);
+//         }
+//         return_elements
+//     }};
+// }
 
-    let test_category_a = NewCategory { name: "Category A" };
+pub fn save_recipe(connection: &PgConnection, recipe_to_save: RecipeFull) -> bool {
+    use super::schema::category;
+    use super::schema::how_to_section;
+    use super::schema::ingredient;
+    use super::schema::keyword;
+    use diesel::pg::upsert::excluded;
+
+    let inserted_categories =
+        upsert_recipe_elements!(connection, category, Category, &recipe_to_save.categories);
+    let inserted_ingredients = upsert_recipe_elements!(
+        connection,
+        ingredient,
+        Ingredient,
+        &recipe_to_save.ingredients
+    );
+    let inserted_keywords =
+        upsert_recipe_elements!(connection, keyword, Keyword, &recipe_to_save.keywords);
+    let inserted_how_to_section = upsert_recipe_elements!(
+        connection,
+        how_to_section,
+        HowToSection,
+        &recipe_to_save.how_to_section_full
+    );
+
+    // connection.build_transaction().read_write().run(|| {
+    //     let inserted_categories: Vec<i32> = Vec::new();
+    //     diesel::insert_into(category::table)
+    //         .values(&test_category_a)
+    //         .get_results(&connection)
+    // });
 
     // connection
     //     .transaction::<_, Error, _>(|| {
@@ -153,40 +237,32 @@ mod tests {
         connection
     }
 
+    // fn empty_recipe_table<T: Identifiable>(connection: &PgConnection, table_name: T) {
+    //     diesel::delete(table_name)
+    //         .execute(connection)
+    //         .expect(format!("could not delete {:?} table", table_name));
+    // }
+
+    macro_rules! empty_recipe_table {
+        ($connection:expr, $table:expr) => {
+            diesel::delete($table)
+                .execute($connection)
+                .expect("could not delete table");
+        };
+    }
+
     fn reset_db(connection: &PgConnection) {
-        diesel::delete(recipe_category)
-            .execute(connection)
-            .expect("could not delete recipe_category associations");
-        diesel::delete(category)
-            .execute(connection)
-            .expect("could not delete category");
-        diesel::delete(recipe_keyword)
-            .execute(connection)
-            .expect("could not delete recipe_keyword associations");
-        diesel::delete(keyword)
-            .execute(connection)
-            .expect("could not delete keyword");
-        diesel::delete(recipe_ingredient)
-            .execute(connection)
-            .expect("could not delete recipe_ingredient associations");
-        diesel::delete(ingredient)
-            .execute(connection)
-            .expect("could not delete ingredient");
-        diesel::delete(recipe_how_to_section_how_to_step)
-            .execute(connection)
-            .expect("could not delete recipe_how_to_section_how_to_step associations");
-        diesel::delete(recipe_how_to_section)
-            .execute(connection)
-            .expect("could not delete recipe_how_to_section associations");
-        diesel::delete(how_to_section)
-            .execute(connection)
-            .expect("could not delete how_to_section");
-        diesel::delete(how_to_step)
-            .execute(connection)
-            .expect("could not delete how_to_step");
-        diesel::delete(recipe)
-            .execute(connection)
-            .expect("could not delete recipe");
+        empty_recipe_table!(connection, recipe_category);
+        empty_recipe_table!(connection, category);
+        empty_recipe_table!(connection, recipe_keyword);
+        empty_recipe_table!(connection, keyword);
+        empty_recipe_table!(connection, recipe_ingredient);
+        empty_recipe_table!(connection, ingredient);
+        empty_recipe_table!(connection, recipe_how_to_section_how_to_step);
+        empty_recipe_table!(connection, recipe_how_to_section);
+        empty_recipe_table!(connection, how_to_section);
+        empty_recipe_table!(connection, how_to_step);
+        empty_recipe_table!(connection, recipe);
     }
 
     fn dummy_category_a<'a>() -> NewCategory<'a> {
@@ -200,7 +276,7 @@ mod tests {
     fn dummy_recipe_a<'a>() -> NewRecipe<'a> {
         NewRecipe {
             name: "Recipe A",
-            author: "Recipe A author",
+            author: "Recipe A authoString::from(",
             image: "Recipe A image",
             prep_time: "Recipe A prep_time",
             cook_time: "Recipe A cook_time",
@@ -391,136 +467,132 @@ mod tests {
     }
     #[test]
     fn test_save_recipe() {
-        use crate::database::schema::*;
-
         let connection = setup_test_db();
 
         let test_category = vec![Category {
             id: 1,
-            name: "Desserts".to_owned(),
+            name: String::from("Desserts"),
         }];
 
         let test_ingredient = vec![
             Ingredient {
                 id: 1,
-                name: r"375 ml (1 1/2 tasse) de farine tout usage non blanchie".to_owned(),
+                name: String::from("375 ml (1 1/2 tasse) de farine tout usage non blanchie"),
             },
             Ingredient {
                 id: 2,
-                name: r"250 ml (1 tasse) de poudre d\u2019amandes".to_owned(),
+                name: String::from("250 ml (1 tasse) de poudre d'amandes"),
             },
             Ingredient {
                 id: 3,
-                name: r"5 ml (1 c. \u00e0 th\u00e9) de poudre \u00e0 p\u00e2te".to_owned(),
+                name: String::from("5 ml (1 c. à thé) de poudre à pâte"),
             },
             Ingredient {
                 id: 4,
-                name: r"1 ml (1/4 c. \u00e0 th\u00e9) de sel".to_owned(),
+                name: String::from("1 ml (1/4 c. à thé) de sel"),
             },
             Ingredient {
                 id: 5,
-                name: r"180 ml (3/4 tasse) de beurre non sal\u00e9, ramolli".to_owned(),
+                name: String::from("180 ml (3/4 tasse) de beurre non salé, ramolli"),
             },
             Ingredient {
                 id: 6,
-                name: r"250 ml (1 tasse) de sucre \u00e0 glacer".to_owned(),
+                name: String::from("250 ml (1 tasse) de sucre en poudre"),
             },
             Ingredient {
                 id: 7,
-                name: r"15 ml (1 c. \u00e0 soupe) d\u2019eau froide".to_owned(),
+                name: String::from("15 ml (1 c. à soupe) d'eau froide"),
             },
             Ingredient {
                 id: 8,
-                name: r"5 ml (1 c. \u00e0 th\u00e9) d\u2019extrait de vanille".to_owned(),
+                name: String::from("5 ml (1 c. à thé) d'extrait de vanille"),
             },
             Ingredient {
                 id: 9,
-                name: r"1 ml (1/4 c. \u00e0 th\u00e9) d\u2019extrait d\u2019amande (facultatif)"
-                    .to_owned(),
+                name: String::from("1 ml (1/4 c. à thé) d'extrait d'amande (facultatif)"),
             },
         ];
 
         let test_keyword = vec![
             Keyword {
                 id: 1,
-                name: r"recettes de No\u00ebl".to_owned(),
+                name: String::from("recettes de Noël"),
             },
             Keyword {
                 id: 2,
-                name: r"desserts de No\u00ebl".to_owned(),
+                name: String::from("desserts de Noël"),
             },
             Keyword {
                 id: 3,
-                name: r"biscuits de No\u00ebl".to_owned(),
+                name: String::from("biscuits de Noël"),
             },
             Keyword {
                 id: 4,
-                name: r"biscuits sabl\u00e9s au beurre".to_owned(),
+                name: String::from("biscuits sablés au beurre"),
             },
             Keyword {
                 id: 5,
-                name: r"recettes de biscuits sabl\u00e9s au beurre".to_owned(),
+                name: String::from("recettes de biscuits sablés au beurre"),
             },
             Keyword {
                 id: 6,
-                name: r"biscuits".to_owned(),
+                name: String::from("biscuits"),
             },
             Keyword {
                 id: 7,
-                name: r"recettes de biscuits".to_owned(),
+                name: String::from("recettes de biscuits"),
             },
         ];
 
         let recipe_how_to_step = vec![
             HowToStep{
                 id: 1,
-                name: r"Dans un bol, m\u00e9langer la farine, la poudre d\u2019amandes, la poudre \u00e0 p\u00e2te et le sel. R\u00e9server.".to_owned(),
+                name: String::from("Dans un bol, mélanger la farine, la poudre d'amandes, la poudre à pâte et le sel. Réserver."),
             },
             HowToStep{
                 id: 2,
-                name: r"Dans un autre bol, cr\u00e9mer le beurre avec le sucre \u00e0 glacer, l\u2019eau, la vanille et l\u2019extrait d\u2019amandes au batteur \u00e9lectrique. \u00c0 basse vitesse ou \u00e0 la cuill\u00e8re de bois, incorporer les ingr\u00e9dients secs.".to_owned(),
+                name: String::from("Dans un autre bol, crémer le beurre avec le sucre à glacer, l'eau, la vanille et l'extrait d'amandes au batteur électrique. À basse vitesse ou à la cuillère de bois, incorporer les ingrédients secs."),
             },
             HowToStep{
                 id: 3,
-                name: r"Sur un plan de travail, d\u00e9poser la p\u00e2te sur une feuille de papier parchemin ou de papier d\u2019aluminium. Former un rouleau d\u2019environ 5\u00a0cm (2 po) de diam\u00e8tre. Refermer le rouleau en tortillant les deux extr\u00e9mit\u00e9s du papier d\u2019aluminium. R\u00e9frig\u00e9rer environ 3 heures ou jusqu\u2019\u00e0 ce que la p\u00e2te soit tr\u00e8s ferme au toucher.".to_owned(),
+                name: String::from("Sur un plan de travail, déposer la pâte sur une feuille de papier parchemin ou de papier d'aluminium. Former un rouleau d'environ 5cm (2 po) de diamètre. Refermer le rouleau en tortillant les deux extrémités du papier d'aluminium. Réfrigérer environ 3 heures ou jusqu'à ce que la pâte soit très ferme au toucher."),
             },
             HowToStep{
                 id: 4,
-                name: r"Placer la grille au centre du four. Pr\u00e9chauffer le four \u00e0 190\u00a0\u00b0C (375 \u00b0F). Tapisser deux plaques \u00e0 biscuits de papier parchemin.".to_owned(),
+                name: String::from("Placer la grille au centre du four. Préchauffer le four à 190C (375F). Tapisser deux plaques à biscuits de papier parchemin."),
             },
             HowToStep{
                 id: 5,
-                name: r"D\u00e9baller et placer le rouleau sur un plan de travail. Couper en tranches d\u2019environ 1 cm (\u00bd po) d\u2019\u00e9paisseur et les r\u00e9partir sur les plaques. ".to_owned(),
+                name: String::from("Déballer et placer le rouleau sur un plan de travail. Couper en tranches d'environ 1cm (½po) d'épaisseur et les répartir sur les plaques. "),
             },
             HowToStep{
                 id: 6,
-                name: r"Cuire au four, une plaque \u00e0 la fois, environ 12 minutes, ou jusqu\u2019\u00e0 ce que les biscuits soient l\u00e9g\u00e8rement dor\u00e9s. Laisser refroidir sur la plaque.".to_owned(),
+                name: String::from("Cuire au four, une plaque à la fois, environ 12 minutes, ou jusqu'à ce que les biscuits soient légèrement dorés. Laisser refroidir sur la plaque."),
             },
 ];
 
         let recipe_how_to_section_full = vec![RecipeHowToSectionFull {
             id: 1,
-            name: "".to_owned(),
+            name: String::from(""),
             how_to_steps: recipe_how_to_step,
         }];
 
         let test_recipe = RecipeFull {
             id: 1,
-            name: r"Biscuits au beurre r\u00e9frig\u00e9rateur".to_owned(),
-            author: r"Ricardocuisine".to_owned(),
-            image: r"https://images.ricardocuisine.com/services/recipes/4934.jpg".to_owned(),
-            prep_time: r"PT20M".to_owned(),
-            cook_time: r"PT12M".to_owned(),
-            total_time: r"PT32M".to_owned(),
-            recipe_yield: r"40 biscuits, environ".to_owned(),
-            description: r"Recette de Ricardo de biscuits au beurre r\u00e9frig\u00e9rateur"
-                .to_owned(),
+            name: String::from("Biscuits au beurre réfrigérateur"),
+            author: String::from("Ricardocuisine"),
+            image: String::from("https://images.ricardocuisine.com/services/recipes/4934.jpg"),
+            prep_time: String::from("PT20M"),
+            cook_time: String::from("PT12M"),
+            total_time: String::from("PT32M"),
+            recipe_yield: String::from("40 biscuits, environ"),
+            description: String::from("Recette de Ricardo de biscuits au beurre réfrigérateur"),
             categories: test_category,
             keywords: test_keyword,
             ingredients: test_ingredient,
             how_to_section_full: recipe_how_to_section_full,
         };
 
-        assert!(save_recipe(test_recipe));
+        assert!(save_recipe(&connection, test_recipe));
     }
 }

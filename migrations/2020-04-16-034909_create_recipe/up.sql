@@ -1,6 +1,6 @@
 CREATE TABLE "recipe" (
   "id" SERIAL PRIMARY KEY,
-  "name" VARCHAR NOT NULL,
+  "name" VARCHAR NOT NULL UNIQUE,
   "author" VARCHAR NOT NULL,
   "image" VARCHAR NOT NULL,
   "prep_time" VARCHAR NOT NULL,
@@ -12,7 +12,7 @@ CREATE TABLE "recipe" (
 );
 CREATE TABLE "category" (
   "id" SERIAL PRIMARY KEY,
-  "name" VARCHAR NOT NULL
+  "name" VARCHAR NOT NULL UNIQUE
 );
 CREATE TABLE "recipe_category" (
   "id" SERIAL PRIMARY KEY,
@@ -23,7 +23,7 @@ CREATE TABLE "recipe_category" (
 );
 CREATE TABLE "ingredient" (
   "id" SERIAL PRIMARY KEY,
-  "name" VARCHAR NOT NULL
+  "name" VARCHAR NOT NULL UNIQUE
 );
 CREATE TABLE "recipe_ingredient" (
   "id" SERIAL PRIMARY KEY,
@@ -34,7 +34,7 @@ CREATE TABLE "recipe_ingredient" (
 );
 CREATE TABLE "how_to_section" (
   "id" SERIAL PRIMARY KEY,
-  "name" VARCHAR NOT NULL
+  "name" VARCHAR NOT NULL UNIQUE
 );
 CREATE TABLE "recipe_how_to_section" (
   "id" SERIAL PRIMARY KEY,
@@ -45,7 +45,7 @@ CREATE TABLE "recipe_how_to_section" (
 );
 CREATE TABLE "how_to_step" (
   "id" SERIAL PRIMARY KEY,
-  "name" text NOT NULL
+  "name" VARCHAR NOT NULL UNIQUE
 );
 CREATE TABLE "recipe_how_to_section_how_to_step" (
   "id" SERIAL PRIMARY KEY,
@@ -56,7 +56,7 @@ CREATE TABLE "recipe_how_to_section_how_to_step" (
 );
 CREATE TABLE "keyword" (
   "id" SERIAL PRIMARY KEY,
-  "name" VARCHAR NOT NULL
+  "name" VARCHAR NOT NULL UNIQUE
 );
 CREATE TABLE "recipe_keyword" (
   "id" SERIAL PRIMARY KEY,

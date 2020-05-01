@@ -15,7 +15,7 @@ table! {
 table! {
     how_to_step (id) {
         id -> Int4,
-        name -> Text,
+        name -> Varchar,
     }
 }
 
