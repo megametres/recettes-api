@@ -41,7 +41,7 @@ macro_rules! load_recipe_table {
 }
 
 macro_rules! upsert_recipe_elements {
-    ($connection:expr, $table_name:ident, $model:ty, $elements:expr) => {{
+    ($connection:expr, $table_name:ident, $model:ident, $elements:expr) => {{
         let mut return_elements = Vec::new();
         for x in $elements {
             let inserted_element: Vec<$model> = diesel::insert_into($table_name::table)
@@ -57,23 +57,28 @@ macro_rules! upsert_recipe_elements {
     }};
 }
 
-// macro_rules! link_recipe_elements {
-//     ($connection:expr, $table_name:ident, $model:ty, $elements:expr) => {{
-//         let mut return_elements = Vec::new();
-//         for x in $elements {
-//             let inserted_element: Vec<$model> = diesel::insert_into($table_name::table)
-//                 .values($table_name::name.eq(x.name.to_owned()))
-//                 .on_conflict($table_name::name)
-//                 .do_update()
-//                 .set($table_name::name.eq(excluded($table_name::name)))
-//                 .returning(($table_name::id, $table_name::name))
-//                 .get_results::<$model>($connection)
-//                 .unwrap();
-//             return_elements.push(inserted_element[0].id);
-//         }
-//         return_elements
-//     }};
-// }
+macro_rules! link_recipe_elements {
+    ($connection:expr, $table_name:ident, $column_name:ident, $insertion_model:ident, $elements:expr, $recipe_id:expr) => {{
+        for x in $elements {
+            let element_to_insert = $insertion_model {
+                recipe_id: $recipe_id,
+                $column_name: x,
+            };
+            diesel::insert_into($table_name::table)
+                .values(&element_to_insert)
+                .execute($connection)
+                .unwrap_or_else(|_| {
+                    panic!(
+                        "{} {:?} ({},{})",
+                        "Error saving new ",
+                        print_type_of(&element_to_insert),
+                        $recipe_id,
+                        x
+                    )
+                });
+        }
+    }};
+}
 
 pub fn load_recipe(connection: &PgConnection, recipe_id: i32) -> RecipeFull {
     use crate::database::schema::*;
@@ -203,38 +208,48 @@ pub fn save_recipe(connection: &PgConnection, recipe_to_save: &RecipeFull) -> bo
         Keyword,
         recipe_to_save.keywords.as_ref().unwrap()
     );
-    let inserted_how_to_section = upsert_recipe_elements!(
+    let inserted_how_to_sections = upsert_recipe_elements!(
         connection,
         how_to_section,
         HowToSection,
         recipe_to_save.how_to_section_full.as_ref().unwrap()
     );
 
-    for x in inserted_categories {
-        let element_to_insert = NewRecipeCategory {
-            recipe_id: inserted_recipe.get(0).unwrap().id,
-            category_id: x,
-        };
-        diesel::insert_into(recipe_category::table)
-            .values(&element_to_insert)
-            .execute(connection)
-            .unwrap_or_else(|_| {
-                panic!(
-                    "{} {:?} ({},{})",
-                    "Error saving new ",
-                    print_type_of(&element_to_insert),
-                    inserted_recipe.get(0).unwrap().id,
-                    x
-                )
-            });
-    }
-    //                 .values($table_name::name.eq(x.name.to_owned()))
-    //                 .on_conflict($table_name::name)
-    //                 .do_update()
-    //                 .set($table_name::name.eq(excluded($table_name::name)))
-    //                 .returning(($table_name::id, $table_name::name))
-    //                 .get_results::<$model>($connection)
-    //                 .unwrap();
+    link_recipe_elements!(
+        connection,
+        recipe_category,
+        category_id,
+        NewRecipeCategory,
+        inserted_categories,
+        inserted_recipe.get(0).unwrap().id
+    );
+
+    link_recipe_elements!(
+        connection,
+        recipe_keyword,
+        keyword_id,
+        NewRecipeKeyword,
+        inserted_keywords,
+        inserted_recipe.get(0).unwrap().id
+    );
+
+    link_recipe_elements!(
+        connection,
+        recipe_ingredient,
+        ingredient_id,
+        NewRecipeIngredient,
+        inserted_ingredients,
+        inserted_recipe.get(0).unwrap().id
+    );
+
+    link_recipe_elements!(
+        connection,
+        recipe_how_to_section,
+        how_to_section_id,
+        NewRecipeHowToSection,
+        inserted_how_to_sections,
+        inserted_recipe.get(0).unwrap().id
+    );
 
     // connection.build_transaction().read_write().run(|| {
     //     let inserted_categories: Vec<i32> = Vec::new();
