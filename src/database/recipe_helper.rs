@@ -26,6 +26,10 @@ pub fn establish_connection() -> PgConnection {
         .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
 }
 
+fn print_type_of<T>(_: &T) -> &str {
+    std::any::type_name::<T>()
+}
+
 macro_rules! load_recipe_table {
     ($connection:expr, $belongs_to:expr, $return_model:ty, $load_model:ty, $join_table:expr, $select_table:expr) => {
         <$return_model>::belonging_to($belongs_to)
@@ -35,6 +39,41 @@ macro_rules! load_recipe_table {
             .unwrap();
     };
 }
+
+macro_rules! upsert_recipe_elements {
+    ($connection:expr, $table_name:ident, $model:ty, $elements:expr) => {{
+        let mut return_elements = Vec::new();
+        for x in $elements {
+            let inserted_element: Vec<$model> = diesel::insert_into($table_name::table)
+                .values($table_name::name.eq(x.name.to_owned()))
+                .on_conflict($table_name::name)
+                .do_update()
+                .set($table_name::name.eq(excluded($table_name::name)))
+                .get_results::<$model>($connection)
+                .unwrap();
+            return_elements.push(inserted_element[0].id);
+        }
+        return_elements
+    }};
+}
+
+// macro_rules! link_recipe_elements {
+//     ($connection:expr, $table_name:ident, $model:ty, $elements:expr) => {{
+//         let mut return_elements = Vec::new();
+//         for x in $elements {
+//             let inserted_element: Vec<$model> = diesel::insert_into($table_name::table)
+//                 .values($table_name::name.eq(x.name.to_owned()))
+//                 .on_conflict($table_name::name)
+//                 .do_update()
+//                 .set($table_name::name.eq(excluded($table_name::name)))
+//                 .returning(($table_name::id, $table_name::name))
+//                 .get_results::<$model>($connection)
+//                 .unwrap();
+//             return_elements.push(inserted_element[0].id);
+//         }
+//         return_elements
+//     }};
+// }
 
 pub fn load_recipe(connection: &PgConnection, recipe_id: i32) -> RecipeFull {
     use crate::database::schema::*;
@@ -121,51 +160,30 @@ pub fn load_recipe(connection: &PgConnection, recipe_id: i32) -> RecipeFull {
         keywords: Some(queried_keyword),
         ingredients: Some(queried_ingredient),
         how_to_section_full: Some(queried_how_to_section_full),
+        json_ld: queried_recipe.json_ld,
     }
 }
 
-macro_rules! upsert_recipe_elements {
-    ($connection:expr, $table_name:ident, $model:ty, $elements:expr) => {{
-        let mut return_elements = Vec::new();
-        for x in $elements {
-            let inserted_element: Vec<$model> = diesel::insert_into($table_name::table)
-                .values($table_name::name.eq(x.name.to_owned()))
-                .on_conflict($table_name::name)
-                .do_update()
-                .set($table_name::name.eq(excluded($table_name::name)))
-                .returning(($table_name::id, $table_name::name))
-                .get_results::<$model>($connection)
-                .unwrap();
-            return_elements.push(inserted_element[0].id);
-        }
-        return_elements
-    }};
-}
-
-// macro_rules! link_recipe_elements {
-//     ($connection:expr, $table_name:ident, $model:ty, $elements:expr) => {{
-//         let mut return_elements = Vec::new();
-//         for x in $elements {
-//             let inserted_element: Vec<$model> = diesel::insert_into($table_name::table)
-//                 .values($table_name::name.eq(x.name.to_owned()))
-//                 .on_conflict($table_name::name)
-//                 .do_update()
-//                 .set($table_name::name.eq(excluded($table_name::name)))
-//                 .returning(($table_name::id, $table_name::name))
-//                 .get_results::<$model>($connection)
-//                 .unwrap();
-//             return_elements.push(inserted_element[0].id);
-//         }
-//         return_elements
-//     }};
-// }
-
 pub fn save_recipe(connection: &PgConnection, recipe_to_save: &RecipeFull) -> bool {
-    use super::schema::category;
-    use super::schema::how_to_section;
-    use super::schema::ingredient;
-    use super::schema::keyword;
+    use super::schema::*;
     use diesel::pg::upsert::excluded;
+
+    let recipe_to_insert = NewRecipe {
+        name: &recipe_to_save.name,
+        author: Some(&recipe_to_save.author.as_ref().unwrap()),
+        image: Some(&recipe_to_save.image.as_ref().unwrap()),
+        prep_time: Some(&recipe_to_save.prep_time.as_ref().unwrap()),
+        cook_time: Some(&recipe_to_save.cook_time.as_ref().unwrap()),
+        total_time: Some(&recipe_to_save.total_time.as_ref().unwrap()),
+        recipe_yield: Some(&recipe_to_save.recipe_yield.as_ref().unwrap()),
+        description: &recipe_to_save.description,
+        json_ld: &recipe_to_save.json_ld,
+    };
+
+    let inserted_recipe: Vec<Recipe> = diesel::insert_into(recipe::table)
+        .values(&recipe_to_insert)
+        .get_results(connection)
+        .unwrap_or_else(|_| panic!("{}{}", "Error saving new recipe ", recipe_to_insert.name));
 
     let inserted_categories = upsert_recipe_elements!(
         connection,
@@ -191,6 +209,32 @@ pub fn save_recipe(connection: &PgConnection, recipe_to_save: &RecipeFull) -> bo
         HowToSection,
         recipe_to_save.how_to_section_full.as_ref().unwrap()
     );
+
+    for x in inserted_categories {
+        let element_to_insert = NewRecipeCategory {
+            recipe_id: inserted_recipe.get(0).unwrap().id,
+            category_id: x,
+        };
+        diesel::insert_into(recipe_category::table)
+            .values(&element_to_insert)
+            .execute(connection)
+            .unwrap_or_else(|_| {
+                panic!(
+                    "{} {:?} ({},{})",
+                    "Error saving new ",
+                    print_type_of(&element_to_insert),
+                    inserted_recipe.get(0).unwrap().id,
+                    x
+                )
+            });
+    }
+    //                 .values($table_name::name.eq(x.name.to_owned()))
+    //                 .on_conflict($table_name::name)
+    //                 .do_update()
+    //                 .set($table_name::name.eq(excluded($table_name::name)))
+    //                 .returning(($table_name::id, $table_name::name))
+    //                 .get_results::<$model>($connection)
+    //                 .unwrap();
 
     // connection.build_transaction().read_write().run(|| {
     //     let inserted_categories: Vec<i32> = Vec::new();
@@ -232,6 +276,16 @@ mod tests {
     use diesel::dsl::count;
     use diesel_migrations::*;
 
+    macro_rules! empty_recipe_table {
+        ($connection:expr, $table:expr) => {
+            diesel::delete($table)
+                .execute($connection)
+                .unwrap_or_else(|_| {
+                    panic!("{} {:?} ", "Error deleting table ", print_type_of(&$table))
+                });
+        };
+    }
+
     fn setup_test_db() -> PgConnection {
         dotenv().ok();
 
@@ -243,20 +297,6 @@ mod tests {
         run_pending_migrations(&connection).expect("Fail to run migrations");
         reset_db(&connection);
         connection
-    }
-
-    // fn empty_recipe_table<T: Identifiable>(connection: &PgConnection, table_name: T) {
-    //     diesel::delete(table_name)
-    //         .execute(connection)
-    //         .expect(format!("could not delete {:?} table", table_name));
-    // }
-
-    macro_rules! empty_recipe_table {
-        ($connection:expr, $table:expr) => {
-            diesel::delete($table)
-                .execute($connection)
-                .expect("could not delete table");
-        };
     }
 
     fn reset_db(connection: &PgConnection) {
@@ -616,6 +656,7 @@ mod tests {
             keywords: Some(test_keyword),
             ingredients: Some(test_ingredient),
             how_to_section_full: Some(recipe_how_to_section_full),
+            json_ld: String::from("blablabla"),
         };
 
         assert!(save_recipe(&connection, &test_recipe));

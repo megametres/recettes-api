@@ -17,4 +17,5 @@ pub struct RecipeFull {
     pub keywords: Option<Vec<Keyword>>,
     pub ingredients: Option<Vec<Ingredient>>,
     pub how_to_section_full: Option<Vec<RecipeHowToSectionFull>>,
+    pub json_ld: String,
 }

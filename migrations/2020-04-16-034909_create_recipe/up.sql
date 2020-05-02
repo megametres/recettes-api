@@ -1,6 +1,6 @@
 CREATE TABLE "recipe" (
   "id" SERIAL PRIMARY KEY,
-  "name" VARCHAR NOT NULL UNIQUE,
+  "name" VARCHAR NOT NULL,
   "author" VARCHAR,
   "image" VARCHAR,
   "prep_time" VARCHAR,
