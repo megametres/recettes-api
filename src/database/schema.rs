@@ -37,12 +37,12 @@ table! {
     recipe (id) {
         id -> Int4,
         name -> Varchar,
-        author -> Varchar,
-        image -> Varchar,
-        prep_time -> Varchar,
-        cook_time -> Varchar,
-        total_time -> Varchar,
-        recipe_yield -> Varchar,
+        author -> Nullable<Varchar>,
+        image -> Nullable<Varchar>,
+        prep_time -> Nullable<Varchar>,
+        cook_time -> Nullable<Varchar>,
+        total_time -> Nullable<Varchar>,
+        recipe_yield -> Nullable<Varchar>,
         description -> Text,
         json_ld -> Text,
     }

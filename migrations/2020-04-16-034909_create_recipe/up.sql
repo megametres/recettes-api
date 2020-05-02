@@ -1,12 +1,12 @@
 CREATE TABLE "recipe" (
   "id" SERIAL PRIMARY KEY,
   "name" VARCHAR NOT NULL UNIQUE,
-  "author" VARCHAR NOT NULL,
-  "image" VARCHAR NOT NULL,
-  "prep_time" VARCHAR NOT NULL,
-  "cook_time" VARCHAR NOT NULL,
-  "total_time" VARCHAR NOT NULL,
-  "recipe_yield" VARCHAR NOT NULL,
+  "author" VARCHAR,
+  "image" VARCHAR,
+  "prep_time" VARCHAR,
+  "cook_time" VARCHAR,
+  "total_time" VARCHAR,
+  "recipe_yield" VARCHAR,
   "description" TEXT NOT NULL,
   "json_ld" TEXT NOT NULL
 );

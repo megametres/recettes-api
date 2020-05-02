@@ -117,10 +117,10 @@ pub fn load_recipe(connection: &PgConnection, recipe_id: i32) -> RecipeFull {
         total_time: queried_recipe.total_time,
         recipe_yield: queried_recipe.recipe_yield,
         description: queried_recipe.description,
-        categories: queried_category,
-        keywords: queried_keyword,
-        ingredients: queried_ingredient,
-        how_to_section_full: queried_how_to_section_full,
+        categories: Some(queried_category),
+        keywords: Some(queried_keyword),
+        ingredients: Some(queried_ingredient),
+        how_to_section_full: Some(queried_how_to_section_full),
     }
 }
 
@@ -160,28 +160,36 @@ macro_rules! upsert_recipe_elements {
 //     }};
 // }
 
-pub fn save_recipe(connection: &PgConnection, recipe_to_save: RecipeFull) -> bool {
+pub fn save_recipe(connection: &PgConnection, recipe_to_save: &RecipeFull) -> bool {
     use super::schema::category;
     use super::schema::how_to_section;
     use super::schema::ingredient;
     use super::schema::keyword;
     use diesel::pg::upsert::excluded;
 
-    let inserted_categories =
-        upsert_recipe_elements!(connection, category, Category, &recipe_to_save.categories);
+    let inserted_categories = upsert_recipe_elements!(
+        connection,
+        category,
+        Category,
+        recipe_to_save.categories.as_ref().unwrap()
+    );
     let inserted_ingredients = upsert_recipe_elements!(
         connection,
         ingredient,
         Ingredient,
-        &recipe_to_save.ingredients
+        recipe_to_save.ingredients.as_ref().unwrap()
     );
-    let inserted_keywords =
-        upsert_recipe_elements!(connection, keyword, Keyword, &recipe_to_save.keywords);
+    let inserted_keywords = upsert_recipe_elements!(
+        connection,
+        keyword,
+        Keyword,
+        recipe_to_save.keywords.as_ref().unwrap()
+    );
     let inserted_how_to_section = upsert_recipe_elements!(
         connection,
         how_to_section,
         HowToSection,
-        &recipe_to_save.how_to_section_full
+        recipe_to_save.how_to_section_full.as_ref().unwrap()
     );
 
     // connection.build_transaction().read_write().run(|| {
@@ -276,12 +284,12 @@ mod tests {
     fn dummy_recipe_a<'a>() -> NewRecipe<'a> {
         NewRecipe {
             name: "Recipe A",
-            author: "Recipe A authoString::from(",
-            image: "Recipe A image",
-            prep_time: "Recipe A prep_time",
-            cook_time: "Recipe A cook_time",
-            total_time: "Recipe A total_time",
-            recipe_yield: "Recipe A recipe_yield",
+            author: Some("Recipe A author"),
+            image: Some("Recipe A image"),
+            prep_time: Some("Recipe A prep_time"),
+            cook_time: Some("Recipe A cook_time"),
+            total_time: Some("Recipe A total_time"),
+            recipe_yield: Some("Recipe A recipe_yield"),
             description: "Recipe A description",
             json_ld: "Recipe A json_ld",
         }
@@ -404,14 +412,29 @@ mod tests {
             .unwrap_or_else(|_| panic!("{}{}", "Error loading recipe ", test_recipe_a.name));
 
         assert_eq!(test_recipe_a.name, result.get(0).unwrap().name);
-        assert_eq!(test_recipe_a.author, result.get(0).unwrap().author);
-        assert_eq!(test_recipe_a.image, result.get(0).unwrap().image);
-        assert_eq!(test_recipe_a.prep_time, result.get(0).unwrap().prep_time);
-        assert_eq!(test_recipe_a.cook_time, result.get(0).unwrap().cook_time);
-        assert_eq!(test_recipe_a.total_time, result.get(0).unwrap().total_time);
         assert_eq!(
-            test_recipe_a.recipe_yield,
-            result.get(0).unwrap().recipe_yield
+            test_recipe_a.author.unwrap(),
+            result.get(0).unwrap().author.as_ref().unwrap()
+        );
+        assert_eq!(
+            test_recipe_a.image.unwrap(),
+            result.get(0).unwrap().image.as_ref().unwrap()
+        );
+        assert_eq!(
+            test_recipe_a.prep_time.unwrap(),
+            result.get(0).unwrap().prep_time.as_ref().unwrap()
+        );
+        assert_eq!(
+            test_recipe_a.cook_time.unwrap(),
+            result.get(0).unwrap().cook_time.as_ref().unwrap()
+        );
+        assert_eq!(
+            test_recipe_a.total_time.unwrap(),
+            result.get(0).unwrap().total_time.as_ref().unwrap()
+        );
+        assert_eq!(
+            test_recipe_a.recipe_yield.unwrap(),
+            result.get(0).unwrap().recipe_yield.as_ref().unwrap()
         );
         assert_eq!(
             test_recipe_a.description,
@@ -580,19 +603,22 @@ mod tests {
         let test_recipe = RecipeFull {
             id: 1,
             name: String::from("Biscuits au beurre réfrigérateur"),
-            author: String::from("Ricardocuisine"),
-            image: String::from("https://images.ricardocuisine.com/services/recipes/4934.jpg"),
-            prep_time: String::from("PT20M"),
-            cook_time: String::from("PT12M"),
-            total_time: String::from("PT32M"),
-            recipe_yield: String::from("40 biscuits, environ"),
+            author: Some(String::from("Ricardocuisine")),
+            image: Some(String::from(
+                "https://images.ricardocuisine.com/services/recipes/4934.jpg",
+            )),
+            prep_time: Some(String::from("PT20M")),
+            cook_time: Some(String::from("PT12M")),
+            total_time: Some(String::from("PT32M")),
+            recipe_yield: Some(String::from("40 biscuits, environ")),
             description: String::from("Recette de Ricardo de biscuits au beurre réfrigérateur"),
-            categories: test_category,
-            keywords: test_keyword,
-            ingredients: test_ingredient,
-            how_to_section_full: recipe_how_to_section_full,
+            categories: Some(test_category),
+            keywords: Some(test_keyword),
+            ingredients: Some(test_ingredient),
+            how_to_section_full: Some(recipe_how_to_section_full),
         };
 
-        assert!(save_recipe(&connection, test_recipe));
+        assert!(save_recipe(&connection, &test_recipe));
+        assert!(save_recipe(&connection, &test_recipe));
     }
 }
