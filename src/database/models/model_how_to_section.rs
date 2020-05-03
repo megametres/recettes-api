@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use super::super::schema::how_to_section;
 use super::super::schema::recipe_how_to_section;
+use super::model_how_to_step::*;
 use super::model_recipe::*;
 
 #[derive(Identifiable, Queryable, Associations, Serialize, Deserialize)]
@@ -32,4 +33,11 @@ pub struct HowToSection {
 #[table_name = "how_to_section"]
 pub struct NewHowToSection<'a> {
     pub name: &'a str,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct RecipeHowToSectionFull {
+    pub id: i32,
+    pub name: String,
+    pub how_to_steps: Vec<HowToStep>,
 }

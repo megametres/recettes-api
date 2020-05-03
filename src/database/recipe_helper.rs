@@ -3,12 +3,10 @@ extern crate dotenv;
 
 use super::models::model_category::*;
 use super::models::model_how_to_section::*;
-use super::models::model_how_to_section_full::*;
 use super::models::model_how_to_step::*;
 use super::models::model_ingredient::*;
 use super::models::model_keyword::*;
 use super::models::model_recipe::*;
-use super::models::model_recipe_full::*;
 
 use super::schema::recipe::dsl::*;
 
@@ -193,6 +191,20 @@ pub fn load_recipe(connection: &PgConnection, recipe_id: i32) -> RecipeFull {
         how_to_section_full: Some(queried_how_to_section_full),
         json_ld: queried_recipe.json_ld,
     }
+}
+
+pub fn get_recipe_list(connection: &PgConnection) -> Vec<RecipeSimple> {
+    let mut return_recipe_list: Vec<RecipeSimple> = Vec::new();
+    let recipe_list: Vec<Recipe> = recipe
+        .load::<Recipe>(connection)
+        .expect("Error loading posts");
+    for x in recipe_list {
+        return_recipe_list.push(RecipeSimple {
+            id: x.id,
+            name: x.name,
+        });
+    }
+    return_recipe_list
 }
 
 pub fn save_recipe(connection: &PgConnection, recipe_to_save: &RecipeFull) -> bool {
