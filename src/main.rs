@@ -7,8 +7,10 @@ extern crate rocket_okapi;
 #[macro_use]
 extern crate diesel;
 mod database;
+mod html_parser;
 
 use database::*;
+use html_parser::*;
 use rocket_contrib::json;
 use rocket_okapi::swagger_ui::{make_swagger_ui, SwaggerUIConfig};
 
