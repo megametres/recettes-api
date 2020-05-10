@@ -8,8 +8,8 @@ edition = "2018"
 diesel = { version = "1.4.4", features = ["postgres"] }
 diesel_migrations = "1.4.0"
 dotenv = "0.15.0"
-html5ever = "0.25.1"
 reqwest = { version = "0.10.4", features = ["blocking", "json"]}
+regex = "1"
 okapi = { version = "0.4.0", features = ["derive_json_schema"] }
 rocket = "0.4.4"
 rocket_okapi = "0.4.1"
