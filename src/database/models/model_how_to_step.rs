@@ -21,7 +21,7 @@ pub struct NewRecipeHowToStep {
     pub how_to_step_id: i32,
 }
 
-#[derive(Identifiable, Queryable, Associations, Serialize, Deserialize)]
+#[derive(Debug, Identifiable, Queryable, Associations, Serialize, Deserialize)]
 #[table_name = "how_to_step"]
 pub struct HowToStep {
     pub id: i32,

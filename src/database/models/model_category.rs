@@ -21,7 +21,7 @@ pub struct NewRecipeCategory {
     pub category_id: i32,
 }
 
-#[derive(Identifiable, Queryable, Associations, Serialize, Deserialize)]
+#[derive(Debug, Identifiable, Queryable, Associations, Serialize, Deserialize)]
 #[table_name = "category"]
 pub struct Category {
     pub id: i32,

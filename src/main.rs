@@ -7,12 +7,15 @@ extern crate rocket_okapi;
 #[macro_use]
 extern crate diesel;
 mod database;
+mod error;
 mod html_parser;
 
 use database::*;
 use html_parser::*;
 use rocket_contrib::json;
+use rocket_contrib::json::Json;
 use rocket_okapi::swagger_ui::{make_swagger_ui, SwaggerUIConfig};
+use serde::{Deserialize, Serialize};
 
 #[openapi]
 #[get("/")]
@@ -35,6 +38,21 @@ fn recipe(id: i32) -> json::JsonValue {
     return json!(return_element);
 }
 
+#[derive(Serialize, Deserialize, JsonSchema)]
+struct InputUrl {
+    value: String,
+}
+
+#[openapi]
+#[post("/parse_recipe", data = "<input_url>")]
+fn parse_recipe(input_url: Json<InputUrl>) {
+    let input: InputUrl = input_url.into_inner();
+    match recipe_parser(input.value.as_str()) {
+        Ok(recipe) => database::save_recipe(recipe),
+        Err(e) => println!("{}", e),
+    }
+}
+
 fn get_docs() -> SwaggerUIConfig {
     SwaggerUIConfig {
         url: Some("/openapi.json".to_owned()),
@@ -44,7 +62,10 @@ fn get_docs() -> SwaggerUIConfig {
 
 fn main() {
     rocket::ignite()
-        .mount("/", routes_with_openapi![index, recipe, recipe_list])
+        .mount(
+            "/",
+            routes_with_openapi![index, recipe, recipe_list, parse_recipe],
+        )
         .mount("/swagger", make_swagger_ui(&get_docs()))
         .launch();
 }

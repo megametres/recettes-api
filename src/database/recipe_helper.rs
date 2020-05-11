@@ -176,20 +176,20 @@ pub fn load_recipe(connection: &PgConnection, recipe_id: i32) -> RecipeFull {
     }
 
     RecipeFull {
-        id: queried_recipe.id,
-        name: queried_recipe.name,
+        id: Some(queried_recipe.id),
+        name: Some(queried_recipe.name),
         author: queried_recipe.author,
         image: queried_recipe.image,
         prep_time: queried_recipe.prep_time,
         cook_time: queried_recipe.cook_time,
         total_time: queried_recipe.total_time,
         recipe_yield: queried_recipe.recipe_yield,
-        description: queried_recipe.description,
+        description: Some(queried_recipe.description),
         categories: Some(queried_category),
         keywords: Some(queried_keyword),
         ingredients: Some(queried_ingredient),
         how_to_section_full: Some(queried_how_to_section_full),
-        json_ld: queried_recipe.json_ld,
+        json_ld: Some(queried_recipe.json_ld),
     }
 }
 
@@ -215,15 +215,15 @@ pub fn save_recipe(connection: &PgConnection, recipe_to_save: &RecipeFull) -> bo
 
     // Insertion in table recipe
     let recipe_to_insert = NewRecipe {
-        name: &recipe_to_save.name,
+        name: &recipe_to_save.name.as_ref().unwrap(),
         author: Some(&recipe_to_save.author.as_ref().unwrap()),
         image: Some(&recipe_to_save.image.as_ref().unwrap()),
         prep_time: Some(&recipe_to_save.prep_time.as_ref().unwrap()),
         cook_time: Some(&recipe_to_save.cook_time.as_ref().unwrap()),
         total_time: Some(&recipe_to_save.total_time.as_ref().unwrap()),
         recipe_yield: Some(&recipe_to_save.recipe_yield.as_ref().unwrap()),
-        description: &recipe_to_save.description,
-        json_ld: &recipe_to_save.json_ld,
+        description: &recipe_to_save.description.as_ref().unwrap(),
+        json_ld: &recipe_to_save.json_ld.as_ref().unwrap(),
     };
 
     let inserted_recipe: Vec<Recipe> = diesel::insert_into(recipe::table)
@@ -327,6 +327,67 @@ pub fn save_recipe(connection: &PgConnection, recipe_to_save: &RecipeFull) -> bo
     }
 
     true
+}
+
+pub fn parse_jsonld(jsonld: &str) -> RecipeFull {
+    let mut return_recipe: RecipeFull = Default::default();
+
+    let json_object = json::parse(jsonld).unwrap();
+    return_recipe.name = Some(json_object["name"].to_string());
+    return_recipe.author = Some(json_object["author"]["name"].to_string());
+    return_recipe.image = Some(json_object["image"].to_string());
+    return_recipe.prep_time = Some(json_object["prepTime"].to_string());
+    return_recipe.cook_time = Some(json_object["cookTime"].to_string());
+    return_recipe.total_time = Some(json_object["totalTime"].to_string());
+    return_recipe.recipe_yield = Some(json_object["recipeYield"].to_string());
+    return_recipe.description = Some(json_object["description"].to_string());
+    return_recipe.json_ld = Some(jsonld.to_string());
+
+    return_recipe.categories = Some(vec![Category {
+        id: 0,
+        name: json_object["recipeCategory"].to_string(),
+    }]);
+
+    let keyword_list = json_object["keywords"].to_string();
+    let mut recipe_keywords = Vec::new();
+    for x in keyword_list.split(',') {
+        recipe_keywords.push(Keyword {
+            id: 0,
+            name: x.to_owned(),
+        });
+    }
+    return_recipe.keywords = Some(recipe_keywords);
+
+    let ingredient_list = json_object["recipeIngredient"].members();
+    let mut recipe_ingredient = Vec::new();
+    for x in ingredient_list {
+        recipe_ingredient.push(Ingredient {
+            id: 0,
+            name: x.to_string(),
+        });
+    }
+    return_recipe.ingredients = Some(recipe_ingredient);
+
+    let how_to_section_list = json_object["recipeInstructions"].members();
+    let mut recipe_how_to_section = Vec::new();
+    for x in how_to_section_list {
+        let mut how_to_step: Vec<HowToStep> = Vec::new();
+        for y in x["itemListElement"].members() {
+            how_to_step.push(HowToStep {
+                id: 0,
+                name: y["text"].to_string(),
+            });
+        }
+        let how_to_section = RecipeHowToSectionFull {
+            id: 0,
+            name: x["name"].to_string(),
+            how_to_steps: how_to_step,
+        };
+        recipe_how_to_section.push(how_to_section);
+    }
+    return_recipe.how_to_section_full = Some(recipe_how_to_section);
+
+    return_recipe
 }
 
 #[cfg(test)]
@@ -711,8 +772,8 @@ mod tests {
         }];
 
         let test_recipe = RecipeFull {
-            id: 1,
-            name: String::from("Biscuits au beurre réfrigérateur"),
+            id: Some(1),
+            name: Some(String::from("Biscuits au beurre réfrigérateur")),
             author: Some(String::from("Ricardocuisine")),
             image: Some(String::from(
                 "https://images.ricardocuisine.com/services/recipes/4934.jpg",
@@ -721,15 +782,89 @@ mod tests {
             cook_time: Some(String::from("PT12M")),
             total_time: Some(String::from("PT32M")),
             recipe_yield: Some(String::from("40 biscuits, environ")),
-            description: String::from("Recette de Ricardo de biscuits au beurre réfrigérateur"),
+            description: Some(String::from(
+                "Recette de Ricardo de biscuits au beurre réfrigérateur",
+            )),
             categories: Some(test_category),
             keywords: Some(test_keyword),
             ingredients: Some(test_ingredient),
             how_to_section_full: Some(recipe_how_to_section_full),
-            json_ld: String::from("blablabla"),
+            json_ld: Some(String::from("blablabla")),
         };
 
         assert!(save_recipe(&connection, &test_recipe));
         assert!(save_recipe(&connection, &test_recipe));
+    }
+
+    #[test]
+    fn test_parse_jsonld() {
+        let jsonld = r#"{
+            "name": "Jarrets d'agneau aux \u00e9pices et au jus de carottes",
+            "author": {
+                "@type": "Person",
+                "name": "Ricardocuisine"
+            },
+            "image": "https://images.ricardocuisine.com/services/recipes/e-jarretagneaujusdecarottes-ric-aut2-2019-0374-dds1.jpg",
+            "datePublished": "2019-09-23T13:55:45+0000",
+            "prepTime": "PT15M",
+            "cookTime": "PT3H45M",
+            "recipeIngredient": [
+                "6\tjarrets d\u2019agneau",
+                "55 g\t(1/4 tasse) de beurre ",
+                "6\toignons, \u00e9minc\u00e9s",
+                "1 litre\t(4 tasses) de bouillon de poulet",
+                "500 ml\t(2 tasses) de jus de carottes",
+                "15 ml\t(1 c. \u00e0 soupe) de poudre de cari",
+                "1\tb\u00e2ton de cannelle",
+                "1/2\tcitron, coup\u00e9 en rondelles "
+            ],
+            "recipeInstructions": [
+                {
+                    "@type": "HowToSection",
+                    "name": "",
+                    "itemListElement": [
+                        {
+                            "@type": "HowToStep",
+                            "text": "Placer la grille au centre du four. Pr\u00e9chauffer le four \u00e0 180\u00a0\u00b0C (350 \u00b0F). \n"
+                        },
+                        {
+                            "@type": "HowToStep",
+                            "text": "Dans une grande cocotte allant au four \u00e0 feu moyen-\u00e9lev\u00e9, dorer la viande dans 30 ml (2 c. \u00e0 soupe) du beurre, soit environ 10 minutes (voir note). Saler et poivrer. R\u00e9server sur une assiette. Dans la m\u00eame cocotte, attendrir les oignons dans le reste du beurre, soit environ 10\u00a0minutes. Ajouter du beurre au besoin. Poursuivre la cuisson \u00e0 feu \u00e9lev\u00e9 environ 15\u00a0minutes ou jusqu\u2019\u00e0 ce que les oignons soient caram\u00e9lis\u00e9s, en remuant constamment et en grattant le fond de la cocotte. \n"
+                        },
+                        {
+                            "@type": "HowToStep",
+                            "text": "Ajouter le bouillon, le jus de carottes, les \u00e9pices et le citron. Remettre la viande dans la cocotte. Porter \u00e0 \u00e9bullition. Saler et poivrer g\u00e9n\u00e9reusement.\n"
+                        },
+                        {
+                            "@type": "HowToStep",
+                            "text": "Couvrir et cuire au four 2 heures en retournant la viande \u00e0 mi-cuisson. Retirer le couvercle et poursuivre la cuisson 1\u00a0heure ou jusqu\u2019\u00e0 ce que la viande se d\u00e9fasse \u00e0 la fourchette. Retirer le b\u00e2ton de cannelle et les rondelles de citron. Rectifier l\u2019assaisonnement. \n"
+                        },
+                        {
+                            "@type": "HowToStep",
+                            "text": "Servir avec une pur\u00e9e de pommes de terre ou le couscous aux carottes et aux olives (voir recette) et les carottes r\u00f4ties au jus de carottes (voir recette), si d\u00e9sir\u00e9.\n"
+                        }
+                    ]
+                }
+            ],
+            "recipeYield": "6 portion(s)",
+            "aggregateRating": {
+                "@type": "AggregateRating",
+                "ratingValue": 5,
+                "ratingCount": 5,
+                "bestRating": "5",
+                "worstRating": "1"
+            },
+            "nutrition": null,
+            "description": "Il n\u2019y a pas plus bel hommage \u00e0 notre racine orang\u00e9e que cette magnifique assiette, compos\u00e9e pour recevoir les gens qu\u2019on aime. Elle est d\u00e9licieusement constitu\u00e9e de deux carottes fanes r\u00f4ties, d\u2019une part de couscous aux carottes et aux olives et d\u2019un morceau de jarret d\u2019agneau qui a longuement brais\u00e9 au four dans un bouillon \u00e9pic\u00e9 au jus de\u2026 (bingo\u2009!) carottes. La cannelle et la poudre de cari viennent ici relever le go\u00fbt du l\u00e9gume avec brio.",
+            "recipeCategory": "Plats principaux",
+            "keywords": "jarrets, jarret, jarrets d'agneau, agneau, \u00e9pices, \u00e9pice, jus de carottes, carottes, carotte, l\u00e9gume, automne, saveurs d'automne, plat automnale, automnal, plat de saison, viande,",
+            "totalTime": "PT4H",
+            "review": [],
+            "video": [],
+            "@context": "http://schema.org",
+            "@type": "Recipe"
+        }"#;
+
+        let returned_recipe: RecipeFull = parse_jsonld(jsonld);
     }
 }

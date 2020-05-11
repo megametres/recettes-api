@@ -22,7 +22,7 @@ pub struct NewRecipeHowToSection {
     pub how_to_section_id: i32,
 }
 
-#[derive(Identifiable, Queryable, Associations, Serialize, Deserialize)]
+#[derive(Debug, Identifiable, Queryable, Associations, Serialize, Deserialize)]
 #[table_name = "how_to_section"]
 pub struct HowToSection {
     pub id: i32,
@@ -35,7 +35,7 @@ pub struct NewHowToSection<'a> {
     pub name: &'a str,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct RecipeHowToSectionFull {
     pub id: i32,
     pub name: String,

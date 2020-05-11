@@ -21,7 +21,7 @@ pub struct NewRecipeKeyword {
     pub keyword_id: i32,
 }
 
-#[derive(Identifiable, Queryable, Associations, Serialize, Deserialize)]
+#[derive(Debug, Identifiable, Queryable, Associations, Serialize, Deserialize)]
 #[table_name = "keyword"]
 pub struct Keyword {
     pub id: i32,
