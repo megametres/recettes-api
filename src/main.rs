@@ -21,14 +21,14 @@ use serde::{Deserialize, Serialize};
 #[get("/")]
 fn index() -> json::JsonValue {
     let return_element = get_recipes();
-    return json!(return_element.get(0));
+    return json!(return_element);
 }
 
 #[openapi]
 #[get("/recipes")]
 fn recipe_list() -> json::JsonValue {
     let return_element = get_recipes();
-    return json!(return_element.get(0));
+    return json!(return_element);
 }
 
 #[openapi]

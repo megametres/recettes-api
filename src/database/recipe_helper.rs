@@ -310,7 +310,7 @@ pub fn save_recipe(connection: &PgConnection, recipe_to_save: &RecipeFull) -> bo
     // Insertion in table how_to_step and recipe_how_to_section_how_to_step
     let how_to_section_full = recipe_to_save.how_to_section_full.as_ref().unwrap();
     for x in 0..inserted_recipe_how_to_sections.len() {
-        let test: &Vec<HowToStep> = how_to_section_full[0].how_to_steps.as_ref();
+        let test: &Vec<HowToStep> = how_to_section_full[x].how_to_steps.as_ref();
         let inserted_how_to_steps =
             upsert_recipe_elements!(connection, how_to_step, HowToStep, test);
 
