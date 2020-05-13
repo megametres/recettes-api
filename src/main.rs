@@ -18,13 +18,6 @@ use rocket_okapi::swagger_ui::{make_swagger_ui, SwaggerUIConfig};
 use serde::{Deserialize, Serialize};
 
 #[openapi]
-#[get("/")]
-fn index() -> json::JsonValue {
-    let return_element = get_recipes();
-    return json!(return_element);
-}
-
-#[openapi]
 #[get("/recipes")]
 fn recipe_list() -> json::JsonValue {
     let return_element = get_recipes();
@@ -62,10 +55,7 @@ fn get_docs() -> SwaggerUIConfig {
 
 fn main() {
     rocket::ignite()
-        .mount(
-            "/",
-            routes_with_openapi![index, recipe, recipe_list, parse_recipe],
-        )
-        .mount("/swagger", make_swagger_ui(&get_docs()))
+        .mount("/", routes_with_openapi![recipe, recipe_list, parse_recipe])
+        .mount("/", make_swagger_ui(&get_docs()))
         .launch();
 }
