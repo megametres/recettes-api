@@ -8,6 +8,10 @@ services:
             POSTGRES_PASSWORD: nbFQm5ge4NHjeXLngGPt4B3WRiUbKTNTboFvbvHqLQCDCz6q
             POSTGRES_USER: recipe_admin
             POSTGRES_DB: recipe
+        volumes:
+            - "./postgresql/pgdata/:/var/lib/postgresql/data/"
+            - "./postgresql/postgresql.conf:/etc/postgresql/postgresql.conf"
+        command: postgres -c config_file=/etc/postgresql/postgresql.conf
         ports:
             - 5432:5432
 

@@ -46,7 +46,7 @@ macro_rules! upsert_recipe_elements {
                 .values($table_name::name.eq(x.name.to_owned()))
                 .on_conflict($table_name::name)
                 .do_update()
-                .set($table_name::name.eq(excluded($table_name::name)))
+                .set($table_name::name.eq(x.name.to_owned()))
                 .get_result::<$model>($connection)
                 .unwrap();
             return_elements.push(inserted_element.id);
@@ -209,7 +209,6 @@ pub fn get_recipe_list(connection: &PgConnection) -> Vec<RecipeSimple> {
 
 pub fn save_recipe(connection: &PgConnection, recipe_to_save: &RecipeFull) -> bool {
     use super::schema::*;
-    use diesel::pg::upsert::excluded;
 
     // TODO :: implement a transaction
 

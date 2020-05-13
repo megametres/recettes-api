@@ -1,8 +1,7 @@
-use serde::{Deserialize, Serialize};
-
 use super::super::schema::category;
 use super::super::schema::recipe_category;
 use super::model_recipe::*;
+use serde::{Deserialize, Serialize};
 
 #[derive(Identifiable, Queryable, Associations, Serialize, Deserialize)]
 #[belongs_to(Recipe)]
