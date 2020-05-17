@@ -12,6 +12,7 @@ mod html_parser;
 
 use database::*;
 use html_parser::*;
+use rocket::http::Status;
 use rocket_contrib::json;
 use rocket_contrib::json::Json;
 use rocket_okapi::swagger_ui::{make_swagger_ui, SwaggerUIConfig};
@@ -33,15 +34,24 @@ fn recipe(id: i32) -> json::JsonValue {
 
 #[derive(Serialize, Deserialize, JsonSchema)]
 struct InputUrl {
-    value: String,
+    url: String,
 }
 
 #[openapi]
 #[post("/parse_recipe", data = "<input_url>")]
 fn parse_recipe(input_url: Json<InputUrl>) {
     let input: InputUrl = input_url.into_inner();
-    match recipe_parser(input.value.as_str()) {
+    match recipe_parser(input.url.as_str()) {
         Ok(recipe) => database::save_recipe(recipe),
+        Err(e) => println!("{}", e),
+    }
+}
+
+#[openapi]
+#[delete("/delete_recipe/<recipe_id>")]
+fn delete_recipe(recipe_id: i32) {
+    match database::delete_recipe(recipe_id) {
+        Ok(()) => (),
         Err(e) => println!("{}", e),
     }
 }
@@ -55,7 +65,10 @@ fn get_docs() -> SwaggerUIConfig {
 
 fn main() {
     rocket::ignite()
-        .mount("/", routes_with_openapi![recipe, recipe_list, parse_recipe])
+        .mount(
+            "/",
+            routes_with_openapi![recipe, recipe_list, parse_recipe, delete_recipe],
+        )
         .mount("/", make_swagger_ui(&get_docs()))
         .launch();
 }

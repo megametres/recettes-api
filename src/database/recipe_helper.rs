@@ -104,6 +104,15 @@ macro_rules! link_recipe_elements_and_return {
     }};
 }
 
+macro_rules! delete_recipe_elements {
+    ($connection:expr, $table_name:ident, $recipe_id:ident) => {{
+        diesel::delete(
+            $table_name.filter(crate::database::schema::$table_name::recipe_id.eq($recipe_id)),
+        )
+        .execute($connection)?
+    }};
+}
+
 pub fn load_recipe(connection: &PgConnection, recipe_id: i32) -> RecipeFull {
     use crate::database::schema::*;
 
@@ -326,6 +335,44 @@ pub fn save_recipe(connection: &PgConnection, recipe_to_save: &RecipeFull) -> bo
     }
 
     true
+}
+
+pub fn delete_recipe(
+    connection: &PgConnection,
+    recipe_index: i32,
+) -> Result<(), Box<dyn std::error::Error>> {
+    use crate::database::schema::recipe_category::dsl::*;
+    use crate::database::schema::recipe_how_to_section::dsl::*;
+    use crate::database::schema::recipe_how_to_section_how_to_step::dsl::*;
+    use crate::database::schema::recipe_ingredient::dsl::*;
+    use crate::database::schema::recipe_keyword::dsl::*;
+    use diesel::pg::expression::dsl::any;
+
+    // Test that the recipe exists
+    recipe.find(recipe_index).get_result::<Recipe>(connection)?;
+
+    delete_recipe_elements!(connection, recipe_category, recipe_index);
+    delete_recipe_elements!(connection, recipe_ingredient, recipe_index);
+    delete_recipe_elements!(connection, recipe_keyword, recipe_index);
+
+    diesel::delete(
+        recipe_how_to_section_how_to_step.filter(
+            crate::database::schema::recipe_how_to_section_how_to_step::recipe_how_to_section_id
+                .eq(any(recipe_how_to_section
+                    .select(crate::database::schema::recipe_how_to_section::id)
+                    .filter(
+                        crate::database::schema::recipe_how_to_section::recipe_id.eq(recipe_index),
+                    ))),
+        ),
+    )
+    .execute(connection)?;
+
+    delete_recipe_elements!(connection, recipe_how_to_section, recipe_index);
+
+    diesel::delete(recipe.filter(crate::database::schema::recipe::id.eq(recipe_index)))
+        .execute(connection)?;
+
+    Ok(())
 }
 
 pub fn parse_jsonld(jsonld: &str) -> RecipeFull {
