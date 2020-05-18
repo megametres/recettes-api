@@ -13,12 +13,11 @@ mod html_parser;
 use database::models::model_recipe::*;
 use database::*;
 use html_parser::*;
-use rocket::http::Status;
+// use rocket::http::Status;
 use rocket_contrib::json;
 use rocket_contrib::json::Json;
 use rocket_okapi::swagger_ui::{make_swagger_ui, SwaggerUIConfig};
 use serde::{Deserialize, Serialize};
-use serde_json::Result;
 
 #[derive(Serialize, Deserialize, JsonSchema)]
 struct InputUrl {
@@ -35,7 +34,7 @@ fn list_recipes() -> json::JsonValue {
 #[openapi]
 #[get("/recipe/<id>")]
 fn get_recipe(id: i32) -> json::JsonValue {
-    let return_element = get_recipe(id);
+    let return_element = database::get_recipe(id);
     return json!(return_element);
 }
 
