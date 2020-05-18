@@ -55,6 +55,15 @@ fn parse_recipe(input_url: Json<InputUrl>) {
 }
 
 #[openapi]
+#[put("/<id>", format = "application/json", data = "<recipe>")]
+fn edit_recipe(id: i32, recipe: Json<RecipeFull>) {
+    match database::edit_recipe(id, recipe.into_inner()) {
+        Ok(()) => (),
+        Err(e) => println!("{}", e),
+    }
+}
+
+#[openapi]
 #[delete("/delete_recipe/<recipe_id>")]
 fn delete_recipe(recipe_id: i32) {
     match database::delete_recipe(recipe_id) {
@@ -76,6 +85,7 @@ fn main() {
             "/",
             routes_with_openapi![
                 add_recipe,
+                edit_recipe,
                 get_recipe,
                 list_recipes,
                 parse_recipe,

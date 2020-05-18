@@ -22,6 +22,13 @@ pub fn save_recipe(recipe: RecipeFull) {
     recipe_helper::save_recipe(&connection, &recipe);
 }
 
+pub fn edit_recipe(recipe_id: i32, recipe: RecipeFull) -> Result<(), Box<dyn std::error::Error>> {
+    let connection = establish_connection();
+    recipe_helper::delete_recipe(&connection, recipe_id)?;
+    recipe_helper::save_recipe(&connection, &recipe);
+    Ok(())
+}
+
 pub fn delete_recipe(recipe_id: i32) -> Result<(), Box<dyn std::error::Error>> {
     let connection = establish_connection();
     recipe_helper::delete_recipe(&connection, recipe_id)
