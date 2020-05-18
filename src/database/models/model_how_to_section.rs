@@ -1,3 +1,4 @@
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::super::schema::how_to_section;
@@ -35,7 +36,7 @@ pub struct NewHowToSection<'a> {
     pub name: &'a str,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
 pub struct RecipeHowToSectionFull {
     pub id: i32,
     pub name: String,

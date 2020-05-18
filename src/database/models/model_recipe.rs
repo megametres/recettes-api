@@ -1,3 +1,4 @@
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::super::schema::recipe;
@@ -41,7 +42,7 @@ pub struct RecipeSimple {
     pub name: String,
 }
 
-#[derive(Default, Debug, Serialize, Deserialize)]
+#[derive(Default, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct RecipeFull {
     pub id: Option<i32>,
     pub name: Option<String>,

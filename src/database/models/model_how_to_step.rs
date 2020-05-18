@@ -1,3 +1,4 @@
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::super::schema::how_to_step;
@@ -21,7 +22,7 @@ pub struct NewRecipeHowToStep {
     pub how_to_step_id: i32,
 }
 
-#[derive(Debug, Identifiable, Queryable, Associations, Serialize, Deserialize)]
+#[derive(Debug, Identifiable, Queryable, Associations, Serialize, Deserialize, JsonSchema)]
 #[table_name = "how_to_step"]
 pub struct HowToStep {
     pub id: i32,

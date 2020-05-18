@@ -1,3 +1,4 @@
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::super::schema::keyword;
@@ -21,7 +22,7 @@ pub struct NewRecipeKeyword {
     pub keyword_id: i32,
 }
 
-#[derive(Debug, Identifiable, Queryable, Associations, Serialize, Deserialize)]
+#[derive(Debug, Identifiable, Queryable, Associations, Serialize, Deserialize, JsonSchema)]
 #[table_name = "keyword"]
 pub struct Keyword {
     pub id: i32,

@@ -10,6 +10,7 @@ mod database;
 mod error;
 mod html_parser;
 
+use database::models::model_recipe::*;
 use database::*;
 use html_parser::*;
 use rocket::http::Status;
@@ -17,24 +18,31 @@ use rocket_contrib::json;
 use rocket_contrib::json::Json;
 use rocket_okapi::swagger_ui::{make_swagger_ui, SwaggerUIConfig};
 use serde::{Deserialize, Serialize};
+use serde_json::Result;
+
+#[derive(Serialize, Deserialize, JsonSchema)]
+struct InputUrl {
+    url: String,
+}
 
 #[openapi]
 #[get("/recipes")]
-fn recipe_list() -> json::JsonValue {
+fn list_recipes() -> json::JsonValue {
     let return_element = get_recipes();
     return json!(return_element);
 }
 
 #[openapi]
 #[get("/recipe/<id>")]
-fn recipe(id: i32) -> json::JsonValue {
+fn get_recipe(id: i32) -> json::JsonValue {
     let return_element = get_recipe(id);
     return json!(return_element);
 }
 
-#[derive(Serialize, Deserialize, JsonSchema)]
-struct InputUrl {
-    url: String,
+#[openapi]
+#[post("/add_recipe", data = "<recipe>")]
+fn add_recipe(recipe: Json<RecipeFull>) {
+    database::save_recipe(recipe.into_inner());
 }
 
 #[openapi]
@@ -67,7 +75,13 @@ fn main() {
     rocket::ignite()
         .mount(
             "/",
-            routes_with_openapi![recipe, recipe_list, parse_recipe, delete_recipe],
+            routes_with_openapi![
+                add_recipe,
+                get_recipe,
+                list_recipes,
+                parse_recipe,
+                delete_recipe
+            ],
         )
         .mount("/", make_swagger_ui(&get_docs()))
         .launch();

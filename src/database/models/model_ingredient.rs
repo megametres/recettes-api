@@ -1,3 +1,4 @@
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::super::schema::ingredient;
@@ -21,7 +22,7 @@ pub struct NewRecipeIngredient {
     pub ingredient_id: i32,
 }
 
-#[derive(Debug, Identifiable, Queryable, Associations, Serialize, Deserialize)]
+#[derive(Debug, Identifiable, Queryable, Associations, Serialize, Deserialize, JsonSchema)]
 #[table_name = "ingredient"]
 pub struct Ingredient {
     pub id: i32,
