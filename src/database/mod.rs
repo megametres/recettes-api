@@ -4,12 +4,18 @@ pub mod models;
 pub mod recipe_helper;
 mod schema;
 
+use models::model_category::*;
 use models::model_recipe::*;
 use recipe_helper::*;
 
 pub fn get_recipes() -> Vec<RecipeSimple> {
     let connection = establish_connection();
     get_recipe_list(&connection)
+}
+
+pub fn get_categories() -> Vec<Category> {
+    let connection = establish_connection();
+    get_category_list(&connection)
 }
 
 pub fn get_recipe(recipe_id: i32) -> RecipeFull {

@@ -32,6 +32,13 @@ fn list_recipes() -> json::JsonValue {
 }
 
 #[openapi]
+#[get("/categories")]
+fn list_categories() -> json::JsonValue {
+    let return_element = get_categories();
+    return json!(return_element);
+}
+
+#[openapi]
 #[get("/recipe/<id>")]
 fn get_recipe(id: i32) -> json::JsonValue {
     let return_element = database::get_recipe(id);
@@ -89,7 +96,8 @@ fn main() {
                 get_recipe,
                 list_recipes,
                 parse_recipe,
-                delete_recipe
+                delete_recipe,
+                list_categories
             ],
         )
         .mount("/", make_swagger_ui(&get_docs()))

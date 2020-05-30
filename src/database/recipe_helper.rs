@@ -216,6 +216,15 @@ pub fn get_recipe_list(connection: &PgConnection) -> Vec<RecipeSimple> {
     return_recipe_list
 }
 
+pub fn get_category_list(connection: &PgConnection) -> Vec<Category> {
+    use super::schema::category::dsl::*;
+    let category_list: Vec<Category> = category
+        .order(name)
+        .load::<Category>(connection)
+        .expect("Error loading posts");
+    category_list
+}
+
 pub fn save_recipe(connection: &PgConnection, recipe_to_save: &RecipeFull) -> bool {
     use super::schema::*;
 
