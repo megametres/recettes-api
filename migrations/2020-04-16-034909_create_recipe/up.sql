@@ -1,6 +1,11 @@
+CREATE TABLE "category" (
+  "id" SERIAL PRIMARY KEY,
+  "name" VARCHAR NOT NULL UNIQUE
+);
 CREATE TABLE "recipe" (
   "id" SERIAL PRIMARY KEY,
   "name" VARCHAR NOT NULL,
+  "category_id" INTEGER NOT NULL,
   "author" VARCHAR,
   "image" VARCHAR,
   "prep_time" VARCHAR,
@@ -8,17 +13,7 @@ CREATE TABLE "recipe" (
   "total_time" VARCHAR,
   "recipe_yield" VARCHAR,
   "description" TEXT NOT NULL,
-  "json_ld" TEXT NOT NULL
-);
-CREATE TABLE "category" (
-  "id" SERIAL PRIMARY KEY,
-  "name" VARCHAR NOT NULL UNIQUE
-);
-CREATE TABLE "recipe_category" (
-  "id" SERIAL PRIMARY KEY,
-  "recipe_id" INTEGER NOT NULL,
-  "category_id" INTEGER NOT NULL,
-  FOREIGN KEY("recipe_id") REFERENCES recipe("id"),
+  "json_ld" TEXT NOT NULL,
   FOREIGN KEY("category_id") REFERENCES category("id")
 );
 CREATE TABLE "ingredient" (

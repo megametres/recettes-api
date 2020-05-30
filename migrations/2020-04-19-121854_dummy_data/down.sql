@@ -1,6 +1,3 @@
-DELETE FROM "recipe_category"
-WHERE
-  true;
 DELETE FROM "category"
 WHERE
   true;

@@ -37,6 +37,7 @@ table! {
     recipe (id) {
         id -> Int4,
         name -> Varchar,
+        category_id -> Int4,
         author -> Nullable<Varchar>,
         image -> Nullable<Varchar>,
         prep_time -> Nullable<Varchar>,
@@ -45,14 +46,6 @@ table! {
         recipe_yield -> Nullable<Varchar>,
         description -> Text,
         json_ld -> Text,
-    }
-}
-
-table! {
-    recipe_category (id) {
-        id -> Int4,
-        recipe_id -> Int4,
-        category_id -> Int4,
     }
 }
 
@@ -88,8 +81,7 @@ table! {
     }
 }
 
-joinable!(recipe_category -> category (category_id));
-joinable!(recipe_category -> recipe (recipe_id));
+joinable!(recipe -> category (category_id));
 joinable!(recipe_how_to_section -> how_to_section (how_to_section_id));
 joinable!(recipe_how_to_section -> recipe (recipe_id));
 joinable!(recipe_how_to_section_how_to_step -> how_to_step (how_to_step_id));
@@ -106,7 +98,6 @@ allow_tables_to_appear_in_same_query!(
     ingredient,
     keyword,
     recipe,
-    recipe_category,
     recipe_how_to_section,
     recipe_how_to_section_how_to_step,
     recipe_ingredient,

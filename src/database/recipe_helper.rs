@@ -8,6 +8,7 @@ use super::models::model_ingredient::*;
 use super::models::model_keyword::*;
 use super::models::model_recipe::*;
 
+use super::schema::category::dsl::*;
 use super::schema::recipe::dsl::*;
 
 use diesel::pg::PgConnection;
@@ -121,14 +122,10 @@ pub fn load_recipe(connection: &PgConnection, recipe_id: i32) -> RecipeFull {
         .get_result::<Recipe>(connection)
         .unwrap();
 
-    let queried_category = load_recipe_table!(
-        connection,
-        &queried_recipe,
-        RecipeCategory,
-        Category,
-        category::table,
-        category::all_columns
-    );
+    let queried_category = category
+        .find(queried_recipe.category_id)
+        .get_result::<Category>(connection)
+        .unwrap();
 
     let queried_ingredient = load_recipe_table!(
         connection,
@@ -187,6 +184,7 @@ pub fn load_recipe(connection: &PgConnection, recipe_id: i32) -> RecipeFull {
     RecipeFull {
         id: Some(queried_recipe.id),
         name: Some(queried_recipe.name),
+        category: Some(queried_category.name),
         author: queried_recipe.author,
         image: queried_recipe.image,
         prep_time: queried_recipe.prep_time,
@@ -194,7 +192,6 @@ pub fn load_recipe(connection: &PgConnection, recipe_id: i32) -> RecipeFull {
         total_time: queried_recipe.total_time,
         recipe_yield: queried_recipe.recipe_yield,
         description: Some(queried_recipe.description),
-        categories: Some(queried_category),
         keywords: Some(queried_keyword),
         ingredients: Some(queried_ingredient),
         how_to_section_full: Some(queried_how_to_section_full),
@@ -203,17 +200,14 @@ pub fn load_recipe(connection: &PgConnection, recipe_id: i32) -> RecipeFull {
 }
 
 pub fn get_recipe_list(connection: &PgConnection) -> Vec<RecipeSimple> {
-    let mut return_recipe_list: Vec<RecipeSimple> = Vec::new();
-    let recipe_list: Vec<Recipe> = recipe
-        .load::<Recipe>(connection)
+    use crate::database::schema::*;
+    let recipe_list: Vec<RecipeSimple> = recipe
+        .inner_join(category)
+        .select((recipe::id, recipe::name, category::name))
+        .load::<RecipeSimple>(connection)
         .expect("Error loading posts");
-    for x in recipe_list {
-        return_recipe_list.push(RecipeSimple {
-            id: x.id,
-            name: x.name,
-        });
-    }
-    return_recipe_list
+
+    recipe_list
 }
 
 pub fn get_category_list(connection: &PgConnection) -> Vec<Category> {
@@ -249,23 +243,12 @@ pub fn save_recipe(connection: &PgConnection, recipe_to_save: &RecipeFull) -> bo
         .unwrap_or_else(|_| panic!("{}{}", "Error saving new recipe ", recipe_to_insert.name));
 
     // Insertion in table category
-    let inserted_categories = upsert_recipe_elements!(
-        connection,
-        category,
-        Category,
-        recipe_to_save.categories.as_ref().unwrap()
-    );
-
-    // Insertion in table recipe_category
-    link_recipe_elements!(
-        connection,
-        recipe_category,
-        recipe_id,
-        category_id,
-        NewRecipeCategory,
-        inserted_categories,
-        inserted_recipe.get(0).unwrap().id
-    );
+    // let inserted_category = upsert_recipe_elements!(
+    //     connection,
+    //     category,
+    //     Category,
+    //     recipe_to_save.categories.as_ref().unwrap()
+    // );
 
     // Insertion in table keyword
     let inserted_keywords = upsert_recipe_elements!(
@@ -350,7 +333,6 @@ pub fn delete_recipe(
     connection: &PgConnection,
     recipe_index: i32,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    use crate::database::schema::recipe_category::dsl::*;
     use crate::database::schema::recipe_how_to_section::dsl::*;
     use crate::database::schema::recipe_how_to_section_how_to_step::dsl::*;
     use crate::database::schema::recipe_ingredient::dsl::*;
@@ -360,7 +342,6 @@ pub fn delete_recipe(
     // Test that the recipe exists
     recipe.find(recipe_index).get_result::<Recipe>(connection)?;
 
-    delete_recipe_elements!(connection, recipe_category, recipe_index);
     delete_recipe_elements!(connection, recipe_ingredient, recipe_index);
     delete_recipe_elements!(connection, recipe_keyword, recipe_index);
 
@@ -398,10 +379,7 @@ pub fn parse_jsonld(jsonld: &str) -> RecipeFull {
     return_recipe.description = Some(json_object["description"].to_string());
     return_recipe.json_ld = Some(jsonld.to_string());
 
-    return_recipe.categories = Some(vec![Category {
-        id: 0,
-        name: json_object["recipeCategory"].to_string(),
-    }]);
+    // return_recipe.category = Some(json_object["recipeCategory"].to_string());
 
     let keyword_list = json_object["keywords"].to_string();
     let mut recipe_keywords = Vec::new();
@@ -453,7 +431,6 @@ mod tests {
     use crate::database::schema::how_to_step::dsl::*;
     use crate::database::schema::ingredient::dsl::*;
     use crate::database::schema::keyword::dsl::*;
-    use crate::database::schema::recipe_category::dsl::*;
     use crate::database::schema::recipe_how_to_section::dsl::*;
     use crate::database::schema::recipe_how_to_section_how_to_step::dsl::*;
     use crate::database::schema::recipe_ingredient::dsl::*;
@@ -486,8 +463,6 @@ mod tests {
     }
 
     fn reset_db(connection: &PgConnection) {
-        empty_recipe_table!(connection, recipe_category);
-        empty_recipe_table!(connection, category);
         empty_recipe_table!(connection, recipe_keyword);
         empty_recipe_table!(connection, keyword);
         empty_recipe_table!(connection, recipe_ingredient);
@@ -497,6 +472,7 @@ mod tests {
         empty_recipe_table!(connection, how_to_section);
         empty_recipe_table!(connection, how_to_step);
         empty_recipe_table!(connection, recipe);
+        empty_recipe_table!(connection, category);
     }
 
     fn dummy_category_a<'a>() -> NewCategory<'a> {
@@ -518,38 +494,6 @@ mod tests {
             recipe_yield: Some("Recipe A recipe_yield"),
             description: "Recipe A description",
             json_ld: "Recipe A json_ld",
-        }
-    }
-
-    fn dummy_recipe_category_a(connection: &PgConnection) -> NewRecipeCategory {
-        use crate::database::schema::*;
-        let test_category_a = dummy_category_a();
-        let test_recipe_a = dummy_recipe_a();
-
-        // Inserting data in the database
-        diesel::insert_into(category::table)
-            .values(&test_category_a)
-            .execute(connection)
-            .unwrap_or_else(|_| panic!("{}{}", "Error saving new category ", test_category_a.name));
-
-        let inserted_category = category
-            .filter(category::name.eq(test_category_a.name))
-            .load::<Category>(connection)
-            .unwrap_or_else(|_| panic!("{}{}", "Error loading category ", test_category_a.name));
-
-        diesel::insert_into(recipe::table)
-            .values(&test_recipe_a)
-            .execute(connection)
-            .unwrap_or_else(|_| panic!("{}{}", "Error saving new recipe ", test_recipe_a.name));
-
-        let inserted_recipe = recipe
-            .filter(recipe::name.eq(test_recipe_a.name))
-            .load::<Recipe>(connection)
-            .unwrap_or_else(|_| panic!("{}{}", "Error loading recipe ", test_recipe_a.name));
-
-        NewRecipeCategory {
-            recipe_id: inserted_recipe.get(0).unwrap().id,
-            category_id: inserted_category.get(0).unwrap().id,
         }
     }
 
@@ -670,51 +614,6 @@ mod tests {
     }
 
     #[test]
-    fn test_recipe_category_insert() {
-        use crate::database::schema::*;
-
-        let connection = setup_test_db();
-
-        let test_recipe_category_a = dummy_recipe_category_a(&connection);
-
-        // Inserting data in the database
-        diesel::insert_into(recipe_category::table)
-            .values(&test_recipe_category_a)
-            .execute(&connection)
-            .unwrap_or_else(|_| {
-                panic!(
-                    "{} ({},{})",
-                    "Error saving new recipe_category ",
-                    test_recipe_category_a.recipe_id,
-                    test_recipe_category_a.category_id,
-                )
-            });
-
-        // Retrieving data from the database
-        let result = recipe_category
-            .filter(recipe_category::recipe_id.eq(test_recipe_category_a.recipe_id))
-            .filter(recipe_category::recipe_id.eq(test_recipe_category_a.recipe_id))
-            .load::<RecipeCategory>(&connection)
-            .unwrap_or_else(|_| {
-                panic!(
-                    "{} ({},{})",
-                    "Error loading recipe_category ",
-                    test_recipe_category_a.recipe_id,
-                    test_recipe_category_a.category_id,
-                )
-            });
-
-        // Compare created data with the database value
-        assert_eq!(
-            test_recipe_category_a.recipe_id,
-            result.get(0).unwrap().recipe_id
-        );
-        assert_eq!(
-            test_recipe_category_a.category_id,
-            result.get(0).unwrap().category_id
-        );
-    }
-    #[test]
     fn test_save_recipe() {
         let connection = setup_test_db();
 
@@ -829,6 +728,7 @@ mod tests {
         let test_recipe = RecipeFull {
             id: Some(1),
             name: Some(String::from("Biscuits au beurre réfrigérateur")),
+            category: Some(String::from("Dessert")),
             author: Some(String::from("Ricardocuisine")),
             image: Some(String::from(
                 "https://images.ricardocuisine.com/services/recipes/4934.jpg",
@@ -840,7 +740,6 @@ mod tests {
             description: Some(String::from(
                 "Recette de Ricardo de biscuits au beurre réfrigérateur",
             )),
-            categories: Some(test_category),
             keywords: Some(test_keyword),
             ingredients: Some(test_ingredient),
             how_to_section_full: Some(recipe_how_to_section_full),

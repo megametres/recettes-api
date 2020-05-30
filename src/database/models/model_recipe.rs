@@ -8,10 +8,12 @@ use super::model_ingredient::*;
 use super::model_keyword::*;
 
 #[derive(Identifiable, Queryable, Associations, Serialize, Deserialize)]
+#[belongs_to(Category)]
 #[table_name = "recipe"]
 pub struct Recipe {
     pub id: i32,
     pub name: String,
+    pub category_id: i32,
     pub author: Option<String>,
     pub image: Option<String>,
     pub prep_time: Option<String>,
@@ -36,16 +38,18 @@ pub struct NewRecipe<'a> {
     pub json_ld: &'a str,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Queryable, Deserialize)]
 pub struct RecipeSimple {
     pub id: i32,
     pub name: String,
+    pub category: String,
 }
 
 #[derive(Default, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct RecipeFull {
     pub id: Option<i32>,
     pub name: Option<String>,
+    pub category: Option<String>,
     pub author: Option<String>,
     pub image: Option<String>,
     pub prep_time: Option<String>,
@@ -53,7 +57,6 @@ pub struct RecipeFull {
     pub total_time: Option<String>,
     pub recipe_yield: Option<String>,
     pub description: Option<String>,
-    pub categories: Option<Vec<Category>>,
     pub keywords: Option<Vec<Keyword>>,
     pub ingredients: Option<Vec<Ingredient>>,
     pub how_to_section_full: Option<Vec<RecipeHowToSectionFull>>,

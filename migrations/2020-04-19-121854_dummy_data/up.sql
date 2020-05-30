@@ -1,8 +1,12 @@
+INSERT INTO "category"("id", "name")
+VALUES
+  (1, 'Desserts');
 INSERT INTO "recipe"
 VALUES
   (
     1,
     'Biscuits au beurre r\u00e9frig\u00e9rateur',
+    1,
     'Ricardocuisine',
     'https://images.ricardocuisine.com/services/recipes/4934.jpg',
     'PT20M',
@@ -82,12 +86,6 @@ VALUES
     "@type": "Recipe"
 }'
   );
-INSERT INTO "category"("id", "name")
-VALUES
-  (1, 'Desserts');
-INSERT INTO "recipe_category"("id", "recipe_id", "category_id")
-VALUES
-  (1, 1, 1);
 INSERT INTO "ingredient"("id", "name")
 VALUES
   (
@@ -187,11 +185,15 @@ VALUES
   (5, 1, 5),
   (6, 1, 6),
   (7, 1, 7);
+INSERT INTO "category"("id", "name")
+VALUES
+  (2, 'Plats principaux');
 INSERT INTO "recipe"
 VALUES
   (
     2,
     'Confit de canard sous vide',
+    2,
     'Ricardocuisine',
     'https://images.ricardocuisine.com/services/recipes/8645.jpg',
     'PT10M',
@@ -256,12 +258,6 @@ VALUES
     "@type": "Recipe"
 }'
   );
-INSERT INTO "category"("id", "name")
-VALUES
-  (2, 'Plats principaux');
-INSERT INTO "recipe_category"("id", "recipe_id", "category_id")
-VALUES
-  (2, 2, 2);
 INSERT INTO "ingredient"("id", "name")
 VALUES
   (
