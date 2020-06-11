@@ -13,9 +13,11 @@ mod html_parser;
 use database::models::model_recipe::*;
 use database::*;
 use html_parser::*;
+use rocket::http::Method;
 // use rocket::http::Status;
 use rocket_contrib::json;
 use rocket_contrib::json::Json;
+use rocket_cors::{AllowedHeaders, AllowedOrigins, Cors, CorsOptions, Error};
 use rocket_okapi::swagger_ui::{make_swagger_ui, SwaggerUIConfig};
 use serde::{Deserialize, Serialize};
 
@@ -83,20 +85,20 @@ fn add_recipe(recipe: Json<RecipeFull>) {
 
 #[openapi]
 #[post("/parse_recipe", data = "<input_url>")]
-fn parse_recipe(input_url: Json<InputUrl>) {
+fn parse_recipe(input_url: Json<InputUrl>) -> json::JsonValue {
     let input: InputUrl = input_url.into_inner();
     match recipe_parser(input.url.as_str()) {
-        Ok(recipe) => database::save_recipe(recipe),
-        Err(e) => println!("{}", e),
+        Ok(recipe) => return json!(database::save_recipe(recipe)),
+        Err(_) => return json!(-1),
     }
 }
 
 #[openapi]
-#[put("/<id>", format = "application/json", data = "<recipe>")]
-fn edit_recipe(id: i32, recipe: Json<RecipeFull>) {
+#[put("/save_recipe/<id>", format = "application/json", data = "<recipe>")]
+fn edit_recipe(id: i32, recipe: Json<RecipeFull>) -> json::JsonValue {
     match database::edit_recipe(id, recipe.into_inner()) {
-        Ok(()) => (),
-        Err(e) => println!("{}", e),
+        Ok(recipe_id) => return json!(recipe_id),
+        Err(_) => return json!(-1),
     }
 }
 

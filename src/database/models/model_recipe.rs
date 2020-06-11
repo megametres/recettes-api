@@ -28,6 +28,7 @@ pub struct Recipe {
 #[table_name = "recipe"]
 pub struct NewRecipe<'a> {
     pub name: &'a str,
+    pub category_id: &'a i32,
     pub author: Option<&'a str>,
     pub image: Option<&'a str>,
     pub prep_time: Option<&'a str>,
