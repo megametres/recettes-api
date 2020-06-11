@@ -401,23 +401,50 @@ pub fn parse_jsonld(jsonld: &str) -> RecipeFull {
     }
     return_recipe.ingredients = Some(recipe_ingredient);
 
-    let how_to_section_list = json_object["recipeInstructions"].members();
     let mut recipe_how_to_section = Vec::new();
-    for x in how_to_section_list {
+
+    // Test if recipeInstructions is only a text field or if it is a group of howToSection/HowToStep
+    if json_object["recipeInstructions"].is_string() {
+        // We split the text into steps if text contains numbers adjacent to a dot ( ie 1. )
+        use regex::Regex;
+        let re = Regex::new(r"\d{1,2}\.").unwrap();
+        let recipe_instructions = json_object["recipeInstructions"].to_string();
+
         let mut how_to_step: Vec<HowToStep> = Vec::new();
-        for y in x["itemListElement"].members() {
-            how_to_step.push(HowToStep {
-                id: 0,
-                name: y["text"].to_string(),
-            });
+        let steps: Vec<&str> = re.split(&recipe_instructions).collect();
+        for step in steps {
+            if !step.is_empty() {
+                how_to_step.push(HowToStep {
+                    id: 0,
+                    name: step.to_string(),
+                });
+            }
         }
-        let how_to_section = RecipeHowToSectionFull {
+
+        recipe_how_to_section.push(RecipeHowToSectionFull {
             id: 0,
-            name: x["name"].to_string(),
+            name: "".to_owned(),
             how_to_steps: how_to_step,
-        };
-        recipe_how_to_section.push(how_to_section);
+        });
+    } else {
+        let how_to_section_list = json_object["recipeInstructions"].members();
+        for x in how_to_section_list {
+            let mut how_to_step: Vec<HowToStep> = Vec::new();
+            for y in x["itemListElement"].members() {
+                how_to_step.push(HowToStep {
+                    id: 0,
+                    name: y["text"].to_string(),
+                });
+            }
+            let how_to_section = RecipeHowToSectionFull {
+                id: 0,
+                name: x["name"].to_string(),
+                how_to_steps: how_to_step,
+            };
+            recipe_how_to_section.push(how_to_section);
+        }
     }
+
     return_recipe.how_to_section_full = Some(recipe_how_to_section);
 
     return_recipe
