@@ -81,8 +81,8 @@ fn delete_recipe(recipe_id: i32) {
 
 fn get_docs() -> SwaggerUIConfig {
     SwaggerUIConfig {
-        url: Some("/openapi.json".to_owned()),
-        urls: None,
+        url: "/openapi.json".to_owned(),
+        ..Default::default()
     }
 }
 
