@@ -24,10 +24,40 @@ struct InputUrl {
     url: String,
 }
 
+fn make_cors() -> Cors {
+    let allowed_origins =
+        AllowedOrigins::some_exact(&["http://localhost:4200", "http://127.0.0.1:4200"]);
+
+    CorsOptions {
+        allowed_origins,
+        allowed_methods: vec![
+            Method::Get,
+            Method::Post,
+            Method::Put,
+            Method::Delete,
+            Method::Options,
+        ]
+        .into_iter()
+        .map(From::from)
+        .collect(),
+        allowed_headers: AllowedHeaders::some(&[
+            "Authorization",
+            "Accept",
+            "Access-Control-Allow-Origin",
+            "Content-Type",
+            "Content-Length",
+        ]),
+        allow_credentials: true,
+        ..Default::default()
+    }
+    .to_cors()
+    .expect("error while building CORS")
+}
+
 #[openapi]
-#[get("/recipes")]
-fn list_recipes() -> json::JsonValue {
-    let return_element = get_recipes();
+#[get("/recipes?<category_id>")]
+fn list_recipes(category_id: Option<i32>) -> json::JsonValue {
+    let return_element = get_recipes(category_id);
     return json!(return_element);
 }
 
@@ -101,5 +131,6 @@ fn main() {
             ],
         )
         .mount("/", make_swagger_ui(&get_docs()))
+        .attach(make_cors())
         .launch();
 }
