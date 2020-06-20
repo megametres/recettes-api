@@ -1,6 +1,8 @@
 extern crate diesel_migrations;
 extern crate dotenv;
 
+pub mod image_converter;
+
 use super::models::model_category::*;
 use super::models::model_how_to_section::*;
 use super::models::model_how_to_step::*;
@@ -8,6 +10,7 @@ use super::models::model_ingredient::*;
 use super::models::model_keyword::*;
 use super::models::model_recipe::*;
 
+use super::image_converter::*;
 use super::schema::category::dsl::*;
 use super::schema::recipe::dsl::*;
 
@@ -30,10 +33,11 @@ fn print_type_of<T>(_: &T) -> &str {
 }
 
 macro_rules! load_recipe_table {
-    ($connection:expr, $belongs_to:expr, $return_model:ty, $load_model:ty, $join_table:expr, $select_table:expr) => {
+    ($connection:expr, $belongs_to:expr, $return_model:ty, $load_model:ty, $join_table:expr, $select_table:expr, $order_by_item:expr) => {
         <$return_model>::belonging_to($belongs_to)
             .inner_join($join_table)
             .select($select_table)
+            .order($order_by_item)
             .load::<$load_model>($connection)
             .unwrap();
     };
@@ -133,7 +137,8 @@ pub fn load_recipe(connection: &PgConnection, recipe_id: i32) -> RecipeFull {
         RecipeIngredient,
         Ingredient,
         ingredient::table,
-        ingredient::all_columns
+        ingredient::all_columns,
+        ingredient::id
     );
 
     let queried_keyword = load_recipe_table!(
@@ -142,7 +147,8 @@ pub fn load_recipe(connection: &PgConnection, recipe_id: i32) -> RecipeFull {
         RecipeKeyword,
         Keyword,
         keyword::table,
-        keyword::all_columns
+        keyword::all_columns,
+        keyword::id
     );
 
     let queried_how_to_section = load_recipe_table!(
@@ -151,7 +157,8 @@ pub fn load_recipe(connection: &PgConnection, recipe_id: i32) -> RecipeFull {
         RecipeHowToSection,
         HowToSection,
         how_to_section::table,
-        how_to_section::all_columns
+        how_to_section::all_columns,
+        how_to_section::id
     );
 
     let queried_recipe_how_to_section = load_recipe_table!(
@@ -160,7 +167,8 @@ pub fn load_recipe(connection: &PgConnection, recipe_id: i32) -> RecipeFull {
         RecipeHowToSection,
         RecipeHowToSection,
         how_to_section::table,
-        recipe_how_to_section::all_columns
+        recipe_how_to_section::all_columns,
+        recipe_how_to_section::id
     );
 
     let mut queried_how_to_section_full: Vec<RecipeHowToSectionFull> = Vec::new();
@@ -172,7 +180,8 @@ pub fn load_recipe(connection: &PgConnection, recipe_id: i32) -> RecipeFull {
             RecipeHowToStep,
             HowToStep,
             how_to_step::table,
-            how_to_step::all_columns
+            how_to_step::all_columns,
+            how_to_step::id
         );
         queried_how_to_section_full.push(RecipeHowToSectionFull {
             id: queried_recipe_how_to_section.get(0).unwrap().id,
@@ -196,6 +205,7 @@ pub fn load_recipe(connection: &PgConnection, recipe_id: i32) -> RecipeFull {
         ingredients: Some(queried_ingredient),
         how_to_section_full: Some(queried_how_to_section_full),
         json_ld: queried_recipe.json_ld,
+        source: queried_recipe.source,
     }
 }
 
@@ -233,6 +243,7 @@ pub fn save_recipe(connection: &PgConnection, recipe_to_save: &RecipeFull) -> i3
     use super::schema::*;
 
     // TODO :: implement a transaction
+    let base64image = imageurl_to_base64(&recipe_to_save.image.as_ref().unwrap());
 
     // Insertion in table category
     let inserted_category = upsert_recipe_elements!(
@@ -249,7 +260,7 @@ pub fn save_recipe(connection: &PgConnection, recipe_to_save: &RecipeFull) -> i3
         name: &recipe_to_save.name.as_ref().unwrap(),
         category_id: inserted_category.get(0).unwrap(),
         author: Some(&recipe_to_save.author.as_ref().unwrap()),
-        image: Some(&recipe_to_save.image.as_ref().unwrap()),
+        image: Some(base64image.as_ref()),
         prep_time: Some(&recipe_to_save.prep_time.as_ref().unwrap()),
         cook_time: Some(&recipe_to_save.cook_time.as_ref().unwrap()),
         total_time: Some(&recipe_to_save.total_time.as_ref().unwrap()),
@@ -259,6 +270,7 @@ pub fn save_recipe(connection: &PgConnection, recipe_to_save: &RecipeFull) -> i3
             Some(value) => Some(value),
             None => Some(""),
         },
+        source: Some(recipe_to_save.source.as_ref().unwrap()),
     };
 
     let inserted_recipe: Vec<Recipe> = diesel::insert_into(recipe::table)
@@ -381,7 +393,7 @@ pub fn delete_recipe(
     Ok(())
 }
 
-pub fn parse_jsonld(jsonld: &str) -> RecipeFull {
+pub fn parse_jsonld(jsonld: &str, recipe_source: &str) -> RecipeFull {
     let mut return_recipe: RecipeFull = Default::default();
 
     let json_object = json::parse(jsonld).unwrap();
@@ -395,6 +407,7 @@ pub fn parse_jsonld(jsonld: &str) -> RecipeFull {
     return_recipe.recipe_yield = Some(json_object["recipeYield"].to_string());
     return_recipe.description = Some(json_object["description"].to_string());
     return_recipe.json_ld = Some(jsonld.to_string());
+    return_recipe.source = Some(recipe_source.to_string());
 
     let keyword_list = json_object["keywords"].to_string();
     let mut recipe_keywords = Vec::new();
@@ -427,10 +440,10 @@ pub fn parse_jsonld(jsonld: &str) -> RecipeFull {
 
         let mut how_to_step: Vec<HowToStep> = Vec::new();
         let steps: Vec<&str> = re.split(&recipe_instructions).collect();
-        for step in steps {
+        for (index, step) in steps.iter().enumerate() {
             if !step.is_empty() {
                 how_to_step.push(HowToStep {
-                    id: 0,
+                    id: index as i32,
                     name: step.to_string(),
                 });
             }
@@ -468,7 +481,6 @@ pub fn parse_jsonld(jsonld: &str) -> RecipeFull {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::database::schema::category::dsl::*;
     use crate::database::schema::how_to_section::dsl::*;
     use crate::database::schema::how_to_step::dsl::*;
     use crate::database::schema::ingredient::dsl::*;
@@ -537,6 +549,7 @@ mod tests {
             recipe_yield: Some("Recipe A recipe_yield"),
             description: "Recipe A description",
             json_ld: Some("Recipe A json_ld"),
+            source: Some("Recipe A source"),
         }
     }
 
@@ -787,6 +800,7 @@ mod tests {
             ingredients: Some(test_ingredient),
             how_to_section_full: Some(recipe_how_to_section_full),
             json_ld: Some(String::from("blablabla")),
+            source: Some(String::from("source")),
         };
 
         // assert!(save_recipe(&connection, &test_recipe));
@@ -862,6 +876,6 @@ mod tests {
             "@type": "Recipe"
         }"#;
 
-        let returned_recipe: RecipeFull = parse_jsonld(jsonld);
+        let returned_recipe: RecipeFull = parse_jsonld(jsonld, "test");
     }
 }

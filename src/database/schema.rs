@@ -39,13 +39,14 @@ table! {
         name -> Varchar,
         category_id -> Int4,
         author -> Nullable<Varchar>,
-        image -> Nullable<Varchar>,
+        image -> Nullable<Text>,
         prep_time -> Nullable<Varchar>,
         cook_time -> Nullable<Varchar>,
         total_time -> Nullable<Varchar>,
         recipe_yield -> Nullable<Varchar>,
         description -> Text,
         json_ld -> Nullable<Text>,
+        source -> Nullable<Varchar>,
     }
 }
 

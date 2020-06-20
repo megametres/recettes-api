@@ -32,7 +32,7 @@ pub fn recipe_parser(page_url: &str) -> Result<RecipeFull, Box<dyn std::error::E
     let page_body = load_page(page_url)?;
     let page_jsonld = extract_jsonld(page_body.as_str())?;
 
-    Ok(parse_jsonld(page_jsonld))
+    Ok(parse_jsonld(page_jsonld, page_url))
 }
 
 #[cfg(test)]

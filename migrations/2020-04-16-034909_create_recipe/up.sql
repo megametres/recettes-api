@@ -7,13 +7,14 @@ CREATE TABLE "recipe" (
   "name" VARCHAR NOT NULL,
   "category_id" INTEGER NOT NULL,
   "author" VARCHAR,
-  "image" VARCHAR,
+  "image" TEXT,
   "prep_time" VARCHAR,
   "cook_time" VARCHAR,
   "total_time" VARCHAR,
   "recipe_yield" VARCHAR,
   "description" TEXT NOT NULL,
   "json_ld" TEXT NOT NULL,
+  "source" VARCHAR,
   FOREIGN KEY("category_id") REFERENCES category("id")
 );
 CREATE TABLE "ingredient" (

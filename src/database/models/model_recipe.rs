@@ -22,6 +22,7 @@ pub struct Recipe {
     pub recipe_yield: Option<String>,
     pub description: String,
     pub json_ld: Option<String>,
+    pub source: Option<String>,
 }
 
 #[derive(Insertable)]
@@ -37,6 +38,7 @@ pub struct NewRecipe<'a> {
     pub recipe_yield: Option<&'a str>,
     pub description: &'a str,
     pub json_ld: Option<&'a str>,
+    pub source: Option<&'a str>,
 }
 
 #[derive(Serialize, Queryable, Deserialize)]
@@ -62,4 +64,5 @@ pub struct RecipeFull {
     pub ingredients: Option<Vec<Ingredient>>,
     pub how_to_section_full: Option<Vec<RecipeHowToSectionFull>>,
     pub json_ld: Option<String>,
+    pub source: Option<String>,
 }
