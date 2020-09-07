@@ -8,10 +8,12 @@ services:
     command: tail -f /dev/null
     volumes:
       - ../:/home/api
+    ports:
+      - 8000:8000
     working_dir: /home/api
     labels:
       - "traefik.http.routers.recipes_rust.rule=Host(`api.recettes`)"
-      - "traefik.http.services.recipes_rust.loadbalancer.server.port=80"
+      - "traefik.http.services.recipes_rust.loadbalancer.server.port=8000"
   postgres:
     image: postgres
     container_name: "recipes_postgres_dev"
