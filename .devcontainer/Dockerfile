@@ -35,13 +35,16 @@ RUN apt-get update \
     #
     # Install Rust components
     && rustup toolchain install nightly-2020-08-29 -c rls -c rust-analysis -c rust-src\
+    && cargo install diesel_cli\
     #
     # Create a non-root user to use if preferred - see https://aka.ms/vscode-remote/containers/non-root-user.
     && groupadd --gid $USER_GID $USERNAME \
     && useradd -s /bin/bash --uid $USER_UID --gid $USER_GID -m $USERNAME \
     && usermod -a -G staff $USERNAME \
-    && chmod 775 $CARGO_HOME \
-    && chmod 775 $RUSTUP_HOME \
+    && find $CARGO_HOME -type d -exec chmod 775 {} \; \
+    && find $CARGO_HOME/registry -type f -exec chmod 664 {} \; \
+    && find $RUSTUP_HOME -type d -exec chmod 775 {} \; \
+    #
     # [Optional] Add sudo support for non-root user
     && apt-get install -y sudo \
     && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
