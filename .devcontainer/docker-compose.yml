@@ -11,6 +11,8 @@ services:
     ports:
       - 8000:8000
     working_dir: /home/api
+    environment:
+      DATABASE_URL: postgres://recipe_admin:nbFQm5ge4NHjeXLngGPt4B3WRiUbKTNTboFvbvHqLQCDCz6q@postgres/recipe
     labels:
       - "traefik.http.routers.recipes_rust.rule=Host(`api.recettes`)"
       - "traefik.http.services.recipes_rust.loadbalancer.server.port=8000"
@@ -23,8 +25,7 @@ services:
       POSTGRES_DB: recipe
     volumes:
       - postgres_data_dev:/var/lib/postgresql/data/
-      - ../../postgresql/postgresql.conf:/etc/postgresql/postgresql.conf
-    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+      - ../postgresql/seed.sql:/docker-entrypoint-initdb.d/seed.sql
     ports:
       - 5432:5432
     labels:
