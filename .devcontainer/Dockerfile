@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See https://go.microsoft.com/fwlink/?linkid=2090316 for license information.
 #-------------------------------------------------------------------------------------------------------------
 
-FROM buildpack-deps:stretch
+FROM buildpack-deps:buster
 
 # Or your actual UID, GID on Linux if not the default 1000
 ARG USERNAME=vscode
