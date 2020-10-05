@@ -1,0 +1,2 @@
+[target.arm-unknown-linux-gnueabihf]
+image = "cross-pi-postgres"

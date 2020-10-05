@@ -25,7 +25,7 @@ services:
       POSTGRES_DB: recipe
     volumes:
       - postgres_data_dev:/var/lib/postgresql/data/
-      - ../postgresql/seed.sql:/docker-entrypoint-initdb.d/seed.sql
+      - ../postgresql-init/:/docker-entrypoint-initdb.d/
     ports:
       - 5432:5432
     labels:

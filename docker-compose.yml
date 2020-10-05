@@ -1,22 +1,23 @@
 version: "3.1"
 
 services:
-    db:
-        image: postgres
-        restart: always
-        environment:
-            POSTGRES_PASSWORD: nbFQm5ge4NHjeXLngGPt4B3WRiUbKTNTboFvbvHqLQCDCz6q
-            POSTGRES_USER: recipe_admin
-            POSTGRES_DB: recipe
-        volumes:
-            - "./postgresql/pgdata/:/var/lib/postgresql/data/"
-            - "./postgresql/postgresql.conf:/etc/postgresql/postgresql.conf"
-        command: postgres -c config_file=/etc/postgresql/postgresql.conf
-        ports:
-            - 5432:5432
+  db:
+    image: postgres
+    environment:
+      POSTGRES_PASSWORD: nbFQm5ge4NHjeXLngGPt4B3WRiUbKTNTboFvbvHqLQCDCz6q
+      POSTGRES_USER: recipe_admin
+      POSTGRES_DB: recipe
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data/
+      - ../postgresql-init/:/docker-entrypoint-initdb.d/
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    ports:
+      - 5432:5432
 
-    adminer:
-        image: adminer
-        restart: always
-        ports:
-            - 8080:8080
+  adminer:
+    image: adminer
+    ports:
+      - 8080:8080
+
+volumes:
+  postgres_data_dev:
