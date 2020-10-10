@@ -28,15 +28,15 @@ struct InputUrl {
 }
 
 fn make_cors() -> Cors {
-
-    let api_url;
-    match env::var("API_URL") {
-        Ok(url) => api_url = url,
-        Err(_) => api_url = "http://127.0.0.1:4200".to_string(),
+    let frontend_url;
+    match env::var("FRONTEND_URL") {
+        Ok(url) => frontend_url = [url],
+        Err(_) => frontend_url = ["http://127.0.0.1:4200".to_string()],
     };
 
-    let allowed_origins =
-        AllowedOrigins::some_exact(&[api_url]);
+    println!("FRONTEND_URL: {}", frontend_url[0]);
+
+    let allowed_origins = AllowedOrigins::some_exact(&frontend_url);
 
     CorsOptions {
         allowed_origins,

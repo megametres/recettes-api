@@ -9,7 +9,7 @@ services:
     volumes:
       - ../:/home/api
     ports:
-      - 8000:8000
+      - 18000:8000
     working_dir: /home/api
     environment:
       DATABASE_URL: postgres://recipe_admin:nbFQm5ge4NHjeXLngGPt4B3WRiUbKTNTboFvbvHqLQCDCz6q@postgres/recipe
@@ -24,11 +24,13 @@ services:
       - postgres_data_dev:/var/lib/postgresql/data/
       - ../postgresql-init/:/docker-entrypoint-initdb.d/
     ports:
-      - 5432:5432
+      - 15432:5432
 
   adminer:
     container_name: "recipes_adminer_dev"
     image: adminer
+    ports:
+      - 18080:8080
 
 volumes:
   postgres_data_dev:
