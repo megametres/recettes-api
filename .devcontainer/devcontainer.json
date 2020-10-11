@@ -32,7 +32,7 @@
 	"workspaceFolder": "/home/api",
 	"service": "rust",
 	"ForwardPorts": [
-		80
+		8000
 	],
 	"remoteUser": "vscode"
 }

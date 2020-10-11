@@ -5,23 +5,8 @@
 
 FROM buildpack-deps:buster
 
-# Or your actual UID, GID on Linux if not the default 1000
-ARG USERNAME=vscode
-ARG USER_UID=1000
-ARG USER_GID=$USER_UID
-
 # Avoid warnings by switching to noninteractive
 ENV DEBIAN_FRONTEND=noninteractive
-
-# Setup env for rust
-ENV RUSTUP_HOME=/usr/local/rustup \
-    CARGO_HOME=/usr/local/cargo \
-    PATH=/usr/local/cargo/bin:$PATH
-
-# Install rustup
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > rustup-init.sh \
-    && chmod +x rustup-init.sh \
-    && ./rustup-init.sh -y --default-toolchain nightly-gnu
 
 # Configure apt and install packages
 RUN apt-get update \
@@ -31,29 +16,45 @@ RUN apt-get update \
     && apt-get -y install git procps lsb-release \
     #
     # Install other dependencies
-    && apt-get install -y lldb \
-    #
-    # Install Rust components
-    && rustup toolchain install nightly-2020-08-29 -c rls -c rust-analysis -c rust-src\
-    && cargo install diesel_cli\
-    #
-    # Create a non-root user to use if preferred - see https://aka.ms/vscode-remote/containers/non-root-user.
-    && groupadd --gid $USER_GID $USERNAME \
-    && useradd -s /bin/bash --uid $USER_UID --gid $USER_GID -m $USERNAME \
-    && usermod -a -G staff $USERNAME \
-    && find $CARGO_HOME -type d -exec chmod 777 {} \; \
-    && find $CARGO_HOME/registry -type f -exec chmod 666 {} \; \
-    && find $RUSTUP_HOME -type d -exec chmod 777 {} \; \
-    #
-    # [Optional] Add sudo support for non-root user
-    && apt-get install -y sudo \
-    && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
-    && chmod 0440 /etc/sudoers.d/$USERNAME \
+    && apt-get install -y lldb sudo \
     #
     # Clean up
     && apt-get autoremove -y \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
+
+# User info
+ARG USERNAME=vscode
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+ARG USER_HOME=/home/$USERNAME
+
+# Create a non-root user to use if preferred - see https://aka.ms/vscode-remote/containers/non-root-user.
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd -s /bin/bash --uid $USER_UID --gid $USER_GID -m $USERNAME \
+    && usermod -a -G staff $USERNAME \
+    #
+    # [Optional] Add sudo support for non-root user
+    && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
+    && chmod 0440 /etc/sudoers.d/$USERNAME
+
+
+# Setup env for rust
+ENV RUSTUP_HOME=$USER_HOME/.rustup \
+    CARGO_HOME=$USER_HOME/.cargo \
+    PATH=$USER_HOME/.cargo/bin:$PATH
+
+USER $USERNAME
+WORKDIR $USER_HOME
+
+# Install rustup
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > rustup-init.sh \
+    && chmod +x rustup-init.sh \
+    && ./rustup-init.sh -y --default-toolchain nightly-gnu
+
+# Install Rust components
+RUN rustup toolchain install nightly-2020-08-29 -c rls -c rust-analysis -c rust-src\
+    && cargo install diesel_cli
 
 EXPOSE 8000
 
