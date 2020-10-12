@@ -52,8 +52,8 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > rustup-init.sh \
     && chmod +x rustup-init.sh \
     && ./rustup-init.sh -y --default-toolchain nightly-gnu
 
-# Install Rust components
-RUN rustup toolchain install nightly-2020-08-29 -c rls -c rust-analysis -c rust-src\
+# Install Rust components ( To know when to update, check https://rust-lang.github.io/rustup-components-history/armv7-unknown-linux-gnueabihf.html )
+RUN rustup toolchain install nightly-2020-10-11 -c rls -c rust-analysis -c rust-src\
     && cargo install diesel_cli
 
 EXPOSE 8000
