@@ -34,8 +34,6 @@ fn make_cors() -> Cors {
         Err(_) => frontend_url = ["http://127.0.0.1:4200".to_string()],
     };
 
-    println!("FRONTEND_URL: {}", frontend_url[0]);
-
     let allowed_origins = AllowedOrigins::some_exact(&frontend_url);
 
     CorsOptions {
