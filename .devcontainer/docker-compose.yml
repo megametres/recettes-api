@@ -4,7 +4,7 @@ services:
   rust:
     build:
       context: .
-    container_name: "recipes_rust_dev"
+    container_name: "rust_dev"
     command: tail -f /dev/null
     volumes:
       - ../:/home/api
@@ -15,7 +15,7 @@ services:
       DATABASE_URL: postgres://recipe_admin:nbFQm5ge4NHjeXLngGPt4B3WRiUbKTNTboFvbvHqLQCDCz6q@postgres/recipe
   postgres:
     image: postgres
-    container_name: "recipes_postgres_dev"
+    container_name: "rust_dev_postgres"
     environment:
       POSTGRES_PASSWORD: nbFQm5ge4NHjeXLngGPt4B3WRiUbKTNTboFvbvHqLQCDCz6q
       POSTGRES_USER: recipe_admin
@@ -27,7 +27,7 @@ services:
       - 15432:5432
 
   adminer:
-    container_name: "recipes_adminer_dev"
+    container_name: "rust_dev_adminer"
     image: adminer
     ports:
       - 18080:8080
