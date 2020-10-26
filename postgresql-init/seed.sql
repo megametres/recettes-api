@@ -16,7 +16,7 @@ INSERT INTO "__diesel_schema_migrations" ("version", "run_on") VALUES
 
 DROP TABLE IF EXISTS "category";
 DROP SEQUENCE IF EXISTS category_id_seq;
-CREATE SEQUENCE category_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1;
+CREATE SEQUENCE category_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 START 3 CACHE 1;
 
 CREATE TABLE "public"."category" (
     "id" integer DEFAULT nextval('category_id_seq') NOT NULL,
@@ -31,7 +31,7 @@ INSERT INTO "category" ("id", "name") VALUES
 
 DROP TABLE IF EXISTS "how_to_section";
 DROP SEQUENCE IF EXISTS how_to_section_id_seq;
-CREATE SEQUENCE how_to_section_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1;
+CREATE SEQUENCE how_to_section_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 START 2 CACHE 1;
 
 CREATE TABLE "public"."how_to_section" (
     "id" integer DEFAULT nextval('how_to_section_id_seq') NOT NULL,
@@ -45,7 +45,7 @@ INSERT INTO "how_to_section" ("id", "name") VALUES
 
 DROP TABLE IF EXISTS "how_to_step";
 DROP SEQUENCE IF EXISTS how_to_step_id_seq;
-CREATE SEQUENCE how_to_step_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1;
+CREATE SEQUENCE how_to_step_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 START 10 CACHE 1;
 
 CREATE TABLE "public"."how_to_step" (
     "id" integer DEFAULT nextval('how_to_step_id_seq') NOT NULL,
@@ -67,7 +67,7 @@ INSERT INTO "how_to_step" ("id", "name") VALUES
 
 DROP TABLE IF EXISTS "ingredient";
 DROP SEQUENCE IF EXISTS ingredient_id_seq;
-CREATE SEQUENCE ingredient_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1;
+CREATE SEQUENCE ingredient_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 START 16 CACHE 1;
 
 CREATE TABLE "public"."ingredient" (
     "id" integer DEFAULT nextval('ingredient_id_seq') NOT NULL,
@@ -95,7 +95,7 @@ INSERT INTO "ingredient" ("id", "name") VALUES
 
 DROP TABLE IF EXISTS "keyword";
 DROP SEQUENCE IF EXISTS keyword_id_seq;
-CREATE SEQUENCE keyword_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1;
+CREATE SEQUENCE keyword_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 START 17 CACHE 1;
 
 CREATE TABLE "public"."keyword" (
     "id" integer DEFAULT nextval('keyword_id_seq') NOT NULL,
@@ -124,7 +124,7 @@ INSERT INTO "keyword" ("id", "name") VALUES
 
 DROP TABLE IF EXISTS "recipe";
 DROP SEQUENCE IF EXISTS recipe_id_seq;
-CREATE SEQUENCE recipe_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1;
+CREATE SEQUENCE recipe_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 START 3 CACHE 1;
 
 CREATE TABLE "public"."recipe" (
     "id" integer DEFAULT nextval('recipe_id_seq') NOT NULL,
@@ -273,7 +273,7 @@ INSERT INTO "recipe" ("id", "name", "category_id", "author", "image", "prep_time
 
 DROP TABLE IF EXISTS "recipe_how_to_section";
 DROP SEQUENCE IF EXISTS recipe_how_to_section_id_seq;
-CREATE SEQUENCE recipe_how_to_section_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1;
+CREATE SEQUENCE recipe_how_to_section_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 START 3 CACHE 1;
 
 CREATE TABLE "public"."recipe_how_to_section" (
     "id" integer DEFAULT nextval('recipe_how_to_section_id_seq') NOT NULL,
@@ -290,7 +290,7 @@ INSERT INTO "recipe_how_to_section" ("id", "recipe_id", "how_to_section_id") VAL
 
 DROP TABLE IF EXISTS "recipe_how_to_section_how_to_step";
 DROP SEQUENCE IF EXISTS recipe_how_to_section_how_to_step_id_seq;
-CREATE SEQUENCE recipe_how_to_section_how_to_step_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1;
+CREATE SEQUENCE recipe_how_to_section_how_to_step_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 START 10 CACHE 1;
 
 CREATE TABLE "public"."recipe_how_to_section_how_to_step" (
     "id" integer DEFAULT nextval('recipe_how_to_section_how_to_step_id_seq') NOT NULL,
@@ -314,7 +314,7 @@ INSERT INTO "recipe_how_to_section_how_to_step" ("id", "recipe_how_to_section_id
 
 DROP TABLE IF EXISTS "recipe_ingredient";
 DROP SEQUENCE IF EXISTS recipe_ingredient_id_seq;
-CREATE SEQUENCE recipe_ingredient_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1;
+CREATE SEQUENCE recipe_ingredient_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 START 16 CACHE 1;
 
 CREATE TABLE "public"."recipe_ingredient" (
     "id" integer DEFAULT nextval('recipe_ingredient_id_seq') NOT NULL,
@@ -344,7 +344,7 @@ INSERT INTO "recipe_ingredient" ("id", "recipe_id", "ingredient_id") VALUES
 
 DROP TABLE IF EXISTS "recipe_keyword";
 DROP SEQUENCE IF EXISTS recipe_keyword_id_seq;
-CREATE SEQUENCE recipe_keyword_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1;
+CREATE SEQUENCE recipe_keyword_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 START 17 CACHE 1;
 
 CREATE TABLE "public"."recipe_keyword" (
     "id" integer DEFAULT nextval('recipe_keyword_id_seq') NOT NULL,
