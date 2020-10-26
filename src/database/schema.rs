@@ -45,7 +45,7 @@ table! {
         total_time -> Nullable<Varchar>,
         recipe_yield -> Nullable<Varchar>,
         description -> Text,
-        json_ld -> Text,
+        json_ld -> Nullable<Text>,
     }
 }
 

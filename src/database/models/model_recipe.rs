@@ -21,7 +21,7 @@ pub struct Recipe {
     pub total_time: Option<String>,
     pub recipe_yield: Option<String>,
     pub description: String,
-    pub json_ld: String,
+    pub json_ld: Option<String>,
 }
 
 #[derive(Insertable)]
@@ -36,7 +36,7 @@ pub struct NewRecipe<'a> {
     pub total_time: Option<&'a str>,
     pub recipe_yield: Option<&'a str>,
     pub description: &'a str,
-    pub json_ld: &'a str,
+    pub json_ld: Option<&'a str>,
 }
 
 #[derive(Serialize, Queryable, Deserialize)]

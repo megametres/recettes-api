@@ -195,7 +195,7 @@ pub fn load_recipe(connection: &PgConnection, recipe_id: i32) -> RecipeFull {
         keywords: Some(queried_keyword),
         ingredients: Some(queried_ingredient),
         how_to_section_full: Some(queried_how_to_section_full),
-        json_ld: Some(queried_recipe.json_ld),
+        json_ld: queried_recipe.json_ld,
     }
 }
 
@@ -255,7 +255,10 @@ pub fn save_recipe(connection: &PgConnection, recipe_to_save: &RecipeFull) -> i3
         total_time: Some(&recipe_to_save.total_time.as_ref().unwrap()),
         recipe_yield: Some(&recipe_to_save.recipe_yield.as_ref().unwrap()),
         description: &recipe_to_save.description.as_ref().unwrap(),
-        json_ld: &recipe_to_save.json_ld.as_ref().unwrap(),
+        json_ld: match &recipe_to_save.json_ld {
+            Some(value) => Some(value),
+            None => Some(""),
+        },
     };
 
     let inserted_recipe: Vec<Recipe> = diesel::insert_into(recipe::table)
@@ -533,7 +536,7 @@ mod tests {
             total_time: Some("Recipe A total_time"),
             recipe_yield: Some("Recipe A recipe_yield"),
             description: "Recipe A description",
-            json_ld: "Recipe A json_ld",
+            json_ld: Some("Recipe A json_ld"),
         }
     }
 
