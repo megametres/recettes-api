@@ -9,10 +9,11 @@ services:
     volumes:
       - ../:/home/api
     ports:
-      - 18000:8000
+      - 8000:8000
     working_dir: /home/api
     environment:
       DATABASE_URL: postgres://recipe_admin:nbFQm5ge4NHjeXLngGPt4B3WRiUbKTNTboFvbvHqLQCDCz6q@postgres/recipe
+      FRONTEND_URL: http://localhost:8000
   postgres:
     image: postgres
     container_name: "rust_dev_postgres"
@@ -24,13 +25,13 @@ services:
       - postgres_data_dev:/var/lib/postgresql/data/
       - ../postgresql-init/:/docker-entrypoint-initdb.d/
     ports:
-      - 15432:5432
+      - 5432:5432
 
   adminer:
     container_name: "rust_dev_adminer"
     image: adminer
     ports:
-      - 18080:8080
+      - 8080:8080
 
 volumes:
   postgres_data_dev:
