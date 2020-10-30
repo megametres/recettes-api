@@ -7,6 +7,7 @@ use rustc_serialize::hex::ToHex;
 pub fn get_file_type(hex: &str) -> &str {
     match &hex[..8] {
         r"ffd8ffe0" => "jpeg",
+        r"ffd8ffe1" => "jpeg",
         r"89504e47" => "png",
         r"47494638" => "gif",
         _ => panic!("invalid file type"),
