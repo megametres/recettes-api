@@ -138,11 +138,12 @@ CREATE TABLE "public"."recipe" (
     "recipe_yield" character varying,
     "description" text NOT NULL,
     "json_ld" text NOT NULL,
+    "source" character varying,
     CONSTRAINT "recipe_pkey" PRIMARY KEY ("id"),
     CONSTRAINT "recipe_category_id_fkey" FOREIGN KEY (category_id) REFERENCES category(id) NOT DEFERRABLE
 ) WITH (oids = false);
 
-INSERT INTO "recipe" ("id", "name", "category_id", "author", "image", "prep_time", "cook_time", "total_time", "recipe_yield", "description", "json_ld") VALUES
+INSERT INTO "recipe" ("id", "name", "category_id", "author", "image", "prep_time", "cook_time", "total_time", "recipe_yield", "description", "json_ld", "source") VALUES
 (1,	'Biscuits au beurre réfrigérateur',	1,	'Ricardocuisine',	'https://images.ricardocuisine.com/services/recipes/4934.jpg',	'PT20M',	'PT12M',	'PT32M',	'40 biscuits, environ',	'Recette de Ricardo de biscuits au beurre réfrigérateur',	'{
     "name": "Biscuits au beurre réfrigérateur",
     "author": {
@@ -213,7 +214,7 @@ INSERT INTO "recipe" ("id", "name", "category_id", "author", "image", "prep_time
     "video": [],
     "@context": "http://schema.org",
     "@type": "Recipe"
-}'),
+}', 'Ricardocuisine'),
 (2,	'Confit de canard sous vide',	2,	'Ricardocuisine',	'https://images.ricardocuisine.com/services/recipes/8645.jpg',	'PT10M',	'PT36H',	'PT36H10M',	'1 portion',	'Confit de canard sous vide | RICARDO',	'{
     "name": "Confit de canard sous vide",
     "author": {
@@ -269,7 +270,7 @@ INSERT INTO "recipe" ("id", "name", "category_id", "author", "image", "prep_time
     "video": [],
     "@context": "http://schema.org",
     "@type": "Recipe"
-}');
+}', 'Ricardocuisine');
 
 DROP TABLE IF EXISTS "recipe_how_to_section";
 DROP SEQUENCE IF EXISTS recipe_how_to_section_id_seq;
