@@ -28,7 +28,7 @@ fn extract_jsonld(page_body: &str) -> Result<&str, Box<dyn std::error::Error>> {
     }
 }
 
-pub fn recipe_parser(page_url: &str) -> Result<RecipeFull, Box<dyn std::error::Error>> {
+pub fn recipe_parser(page_url: &str) -> Result<RecipeExtended, Box<dyn std::error::Error>> {
     let page_body = load_page(page_url)?;
     let page_jsonld = extract_jsonld(page_body.as_str())?;
 

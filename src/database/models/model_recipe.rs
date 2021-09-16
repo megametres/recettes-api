@@ -48,8 +48,8 @@ pub struct RecipeSimple {
     pub category: String,
 }
 
-#[derive(Default, Debug, Serialize, Deserialize, JsonSchema)]
-pub struct RecipeFull {
+#[derive(Default, Debug, Serialize, Deserialize, schemars::JsonSchema)]
+pub struct RecipeExtended {
     pub id: Option<i32>,
     pub name: Option<String>,
     pub category: Option<String>,

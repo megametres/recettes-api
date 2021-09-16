@@ -118,7 +118,7 @@ macro_rules! delete_recipe_elements {
     }};
 }
 
-pub fn load_recipe(connection: &PgConnection, recipe_id: i32) -> RecipeFull {
+pub fn load_recipe(connection: &PgConnection, recipe_id: i32) -> RecipeExtended {
     use crate::database::schema::*;
 
     let queried_recipe = recipe
@@ -190,7 +190,7 @@ pub fn load_recipe(connection: &PgConnection, recipe_id: i32) -> RecipeFull {
         });
     }
 
-    RecipeFull {
+    RecipeExtended {
         id: Some(queried_recipe.id),
         name: Some(queried_recipe.name),
         category: Some(queried_category.name),
@@ -239,7 +239,7 @@ pub fn get_category_list(connection: &PgConnection) -> Vec<Category> {
     category_list
 }
 
-pub fn save_recipe(connection: &PgConnection, recipe_to_save: &RecipeFull) -> i32 {
+pub fn save_recipe(connection: &PgConnection, recipe_to_save: &RecipeExtended) -> i32 {
     use super::schema::*;
 
     // TODO :: implement a transaction
@@ -393,8 +393,8 @@ pub fn delete_recipe(
     Ok(())
 }
 
-pub fn parse_jsonld(jsonld: &str, recipe_source: &str) -> RecipeFull {
-    let mut return_recipe: RecipeFull = Default::default();
+pub fn parse_jsonld(jsonld: &str, recipe_source: &str) -> RecipeExtended {
+    let mut return_recipe: RecipeExtended = Default::default();
 
     let json_object = json::parse(jsonld).unwrap();
     return_recipe.name = Some(json_object["name"].to_string());
@@ -781,7 +781,7 @@ mod tests {
             how_to_steps: recipe_how_to_step,
         }];
 
-        let test_recipe = RecipeFull {
+        let test_recipe = RecipeExtended {
             id: Some(1),
             name: Some(String::from("Biscuits au beurre réfrigérateur")),
             category: Some(String::from("Dessert")),
@@ -876,6 +876,6 @@ mod tests {
             "@type": "Recipe"
         }"#;
 
-        let returned_recipe: RecipeFull = parse_jsonld(jsonld, "test");
+        let returned_recipe: RecipeExtended = parse_jsonld(jsonld, "test");
     }
 }

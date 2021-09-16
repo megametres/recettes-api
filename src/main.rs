@@ -80,7 +80,7 @@ fn get_recipe(id: i32) -> json::JsonValue {
 
 #[openapi]
 #[post("/add_recipe", data = "<recipe>")]
-fn add_recipe(recipe: Json<RecipeFull>) {
+fn add_recipe(recipe: Json<RecipeExtended>) {
     database::save_recipe(recipe.into_inner());
 }
 
@@ -96,7 +96,7 @@ fn parse_recipe(input_url: Json<InputUrl>) -> json::JsonValue {
 
 #[openapi]
 #[put("/save_recipe/<id>", format = "application/json", data = "<recipe>")]
-fn edit_recipe(id: i32, recipe: Json<RecipeFull>) -> json::JsonValue {
+fn edit_recipe(id: i32, recipe: Json<RecipeExtended>) -> json::JsonValue {
     match database::edit_recipe(id, recipe.into_inner()) {
         Ok(recipe_id) => return json!(recipe_id),
         Err(_) => return json!(-1),
