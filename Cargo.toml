@@ -8,18 +8,18 @@ edition = "2018"
 diesel = { version = "1.4.5", features = ["postgres"] }
 diesel_migrations = "1.4.0"
 dotenv = "0.15.0"
-reqwest = { version = "0.10.8", features = ["blocking", "json"]}
+reqwest = { version = "0.11.4", features = ["blocking", "json"]}
 regex = "1"
 okapi = { version = "0.4.0", features = ["derive_json_schema"] }
-rocket = "0.4.5"
+rocket = "0.4.10"
 rocket_cors = "0.5.2"
 rocket_okapi = "0.5.1"
-rustc-serialize = "0.3"
+rustc-serialize = "0.3.24"
 schemars = "0.7.6"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+serde = { version = "1.0.130", features = ["derive"] }
+serde_json = "1.0.68"
 json = "0.12.4"
-url = "2.1.1"
+url = "2.2.2"
 
 
 [dependencies.rocket_contrib]
