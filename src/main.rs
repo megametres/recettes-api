@@ -10,6 +10,7 @@ mod database;
 mod error;
 mod html_parser;
 
+use database::models::model_input_url::*;
 use database::models::model_recipe::*;
 use database::*;
 use html_parser::*;
@@ -19,13 +20,7 @@ use rocket_contrib::json;
 use rocket_contrib::json::Json;
 use rocket_cors::{AllowedHeaders, AllowedOrigins, Cors, CorsOptions, Error};
 use rocket_okapi::swagger_ui::{make_swagger_ui, SwaggerUIConfig};
-use serde::{Deserialize, Serialize};
 use std::env;
-
-#[derive(Serialize, Deserialize, JsonSchema)]
-struct InputUrl {
-    url: String,
-}
 
 fn make_cors() -> Cors {
     let frontend_url;
